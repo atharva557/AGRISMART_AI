@@ -1,0 +1,4 @@
+Flask==3.1.3
+python-dotenv==1.2.3
+# Add model/training dependencies when the core teammate selects the architecture.
+# Add Jupyter dependencies when working on notebooks.

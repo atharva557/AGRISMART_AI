@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AgriSmart AI</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
+</head>
+<body>
+  <main>
+    <p class="eyebrow">SIH 2026 · Project scaffold</p>
+    <h1>AgriSmart AI</h1>
+    <p>Crop disease detection and farm advisory.</p>
+    <p id="connection" role="status">Checking backend…</p>
+    <h2>Modules planned</h2>
+    <ul>
+      <li>Core: crop disease detection</li>
+      <li>A: crop recommendation</li>
+      <li>B: smart irrigation</li>
+      <li>C: weather intelligence</li>
+      <li>D: sustainability score</li>
+      <li>E: farmer assistant</li>
+    </ul>
+    <p>Feature implementation is pending. No trained predictions or recommendations are available yet.</p>
+    <a href="{{ url_for('main.result') }}">View the result template</a>
+  </main>
+</body>
+</html>

@@ -1,0 +1,45 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python and notebooks
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Datasets, uploads, model weights, and generated outputs
+data/*
+!data/README.md
+!data/.gitkeep
+uploads/*
+!uploads/.gitkeep
+model/weights/*
+!model/weights/.gitkeep
+outputs/figures/*
+!outputs/figures/.gitkeep
+outputs/metrics/*
+!outputs/metrics/.gitkeep
+outputs/predictions/*
+!outputs/predictions/.gitkeep
+*.pt
+*.pth
+*.onnx
+*.h5
+*.keras
+tests/sample_leaf.jpg
+
+# Local tools and editors
+tmp/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
