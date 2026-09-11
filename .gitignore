@@ -1,43 +1,50 @@
-# Credentials and local configuration
+﻿# Credentials and local configuration
 .env
 .env.*
 !.env.example
 *.pem
 *.key
 
-# Python and notebooks
+# Python, virtual environments, and notebooks
 .venv/
 venv/
+ENV/
+env/
 __pycache__/
+*/__pycache__/
 *.py[cod]
+*$py.class
 .pytest_cache/
 .ruff_cache/
 .ipynb_checkpoints/
+*/.ipynb_checkpoints/
+.virtual_documents/
+*/.virtual_documents/
 *.egg-info/
+dist/
+build/
 
-# Datasets, uploads, model weights, and generated outputs
+# Datasets, local media uploads, and test image folders
 data/*
 !data/README.md
 !data/.gitkeep
 uploads/*
 !uploads/.gitkeep
-model/weights/*
-!model/weights/.gitkeep
+notebooks/cv_model_notebooks/test_images/
+notebooks/cv_model_notebooks/test_images_external_datasets/
+tests/sample_leaf.jpg
+
+# Generated outputs
 outputs/figures/*
 !outputs/figures/.gitkeep
 outputs/metrics/*
 !outputs/metrics/.gitkeep
 outputs/predictions/*
 !outputs/predictions/.gitkeep
-*.pt
-*.pth
-*.onnx
-*.h5
-*.keras
-tests/sample_leaf.jpg
 
-# Local tools and editors
+# Local tools, logs, and OS files
 tmp/
+temp/
 *.log
 .DS_Store
 Thumbs.db
