@@ -1,0 +1,74 @@
+AgriSmart AI — Model Summary Report
+Generated: 2026-09-11 17:47:48
+
+TASK: Crop-disease image classification, 38 classes
+
+DATASET
+  Source: PlantVillage (color, lab-condition images)
+  Training images: 43444
+  Validation images: 10861
+  Split: pre-split train/val (~80/20)
+
+MODEL
+  Architecture: ResNet18 (transfer learning, ImageNet-pretrained)
+  Input size: 224x224 | Batch size: 32
+  Optimizer: Adam (lr=1e-4) | Loss: CrossEntropyLoss
+  Epochs trained: 10 | Best epoch: 7
+
+HEADLINE METRICS (validation set)
+  Macro-F1: 0.9912
+  Accuracy: 0.9943
+
+WEAKEST CLASSES
+  Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot: F1=0.902
+  Corn_(maize)___Northern_Leaf_Blight: F1=0.954
+  Potato___healthy: F1=0.969
+  Peach___healthy: F1=0.973
+  Tomato___Early_blight: F1=0.980
+
+FULL PER-CLASS REPORT
+                                                    precision    recall  f1-score   support
+
+                                Apple___Apple_scab      1.000     0.984     0.992       126
+                                 Apple___Black_rot      1.000     1.000     1.000       125
+                          Apple___Cedar_apple_rust      1.000     1.000     1.000        55
+                                   Apple___healthy      1.000     0.994     0.997       329
+                               Blueberry___healthy      1.000     1.000     1.000       300
+          Cherry_(including_sour)___Powdery_mildew      1.000     1.000     1.000       210
+                 Cherry_(including_sour)___healthy      1.000     0.988     0.994       170
+Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot      0.967     0.845     0.902       103
+                       Corn_(maize)___Common_rust_      1.000     0.992     0.996       239
+               Corn_(maize)___Northern_Leaf_Blight      0.920     0.990     0.954       197
+                            Corn_(maize)___healthy      1.000     1.000     1.000       233
+                                 Grape___Black_rot      1.000     0.983     0.991       236
+                      Grape___Esca_(Black_Measles)      0.986     1.000     0.993       276
+        Grape___Leaf_blight_(Isariopsis_Leaf_Spot)      1.000     1.000     1.000       215
+                                   Grape___healthy      1.000     1.000     1.000        84
+          Orange___Haunglongbing_(Citrus_greening)      1.000     0.997     0.999      1102
+                            Peach___Bacterial_spot      0.998     0.996     0.997       459
+                                   Peach___healthy      0.947     1.000     0.973        72
+                     Pepper,_bell___Bacterial_spot      1.000     1.000     1.000       200
+                            Pepper,_bell___healthy      0.997     1.000     0.998       295
+                             Potato___Early_blight      1.000     1.000     1.000       200
+                              Potato___Late_blight      0.995     0.995     0.995       200
+                                  Potato___healthy      0.939     1.000     0.969        31
+                               Raspberry___healthy      1.000     1.000     1.000        74
+                                 Soybean___healthy      0.999     0.999     0.999      1018
+                           Squash___Powdery_mildew      1.000     0.995     0.997       367
+                          Strawberry___Leaf_scorch      1.000     1.000     1.000       222
+                              Strawberry___healthy      1.000     1.000     1.000        92
+                           Tomato___Bacterial_spot      1.000     0.993     0.996       425
+                             Tomato___Early_blight      0.971     0.990     0.980       200
+                              Tomato___Late_blight      0.989     0.982     0.986       382
+                                Tomato___Leaf_Mold      1.000     0.995     0.997       191
+                       Tomato___Septoria_leaf_spot      0.989     1.000     0.994       354
+     Tomato___Spider_mites Two-spotted_spider_mite      0.994     0.991     0.993       335
+                              Tomato___Target_Spot      0.986     0.979     0.982       281
+            Tomato___Tomato_Yellow_Leaf_Curl_Virus      0.996     0.999     0.998      1071
+                      Tomato___Tomato_mosaic_virus      1.000     1.000     1.000        74
+                                  Tomato___healthy      0.988     1.000     0.994       318
+
+                                          accuracy                          0.994     10861
+                                         macro avg      0.991     0.992     0.991     10861
+                                      weighted avg      0.994     0.994     0.994     10861
+
