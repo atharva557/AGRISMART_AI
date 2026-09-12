@@ -1,88 +1,92 @@
-# AgriSmart AI
+﻿# AgriSmart AI — Smart Agricultural Diagnostics & Advisory System
 
-Crop disease detection and smart agriculture advisory for the SIH 2026 internal hackathon.
+> **SIH 2026 Submission** | Multiclass Crop Disease Detection & Precision Agriculture Advisory Platform
 
-**Status:** Bonus modules A-D are integrated into the Flask API and interactive dashboard. A exposes an explicitly dataset-scoped crop classifier, B provides an evidence-aware soil-water-balance advisory, C validates and evaluates live Open-Meteo forecasts, and D applies a published resource-intensity formula. The mandatory crop-disease core and bonus E remain placeholders. Saved A/B benchmark results and limitations are documented in the [A/B audit](report/bonus_ab_data_audit.md); they do not establish field suitability, optimal irrigation, or measured resource savings.
+**Status:** The core teammate has added trained disease-model checkpoints, evaluation reports, and a standalone Streamlit console. Bonus modules A-D are integrated into the Flask API and interactive dashboard. The Flask disease endpoint, required `model/predict.py` interface, and bonus E remain explicit placeholders. Saved benchmark results below are reported by the project team, not independently reproduced during integration. A-D do not establish field suitability, optimal irrigation, or measured resource savings.
 
-## Structure
+## 1. Modules Built (Core + Bonus)
 
-```text
-run.py                     # Local entry point
-config.py                  # Environment-based configuration
-requirements.txt
-app/
-  __init__.py              # Flask application factory
-  routes/                  # Pages, disease, A-D advisory, and assistant routes
-  templates/               # index.html and result.html
-  static/                  # CSS and browser JavaScript
-model/
-  train.py                 # Training entry point
-  evaluate.py              # Evaluation entry point
-  predict.py               # Single-image prediction interface
-  model_loader.py          # Weight and class loading
-  classes.json             # Official ordered labels, pending kickoff data
-  weights/                 # Evaluated A serving artifact; other local weights ignored
-notebooks/                 # Core starters and bonus A-D experiment notebooks
-services/
-  disease_info.py          # Sourced disease precautions
-  crop_recommendation.py   # A dataset-scoped model serving and validation
-  irrigation.py            # B calibrated soil-water-balance logic
-  weather.py               # C forecast fetching, validation, and alerts
-  sustainability.py        # D transparent whole-cycle comparison
-  contracts.py             # A-D response envelope and HTTP status mapping
-  farmer_assistant.py      # E
-utils/                     # Image preprocessing and metric helpers
-data/                      # Local datasets, ignored by Git
-outputs/                   # Local figures, metrics, and predictions
-uploads/                   # Local uploads, ignored by Git
-report/model_report.md     # Model report template
-tests/                     # Application and inference contract checks
-```
+Core experiments and the diagnostic console are in `notebooks/cv_model_notebooks/`; reusable A-D logic is in `services/`, HTTP integration in `app/routes/advisory.py`, and farmer-facing forms in `app/templates/` and `app/static/`.
 
-`run.py` avoids using the same name for the entry-point file and the `app/` package. Flask serves HTML and static files directly; Node.js and a separate frontend server are not needed.
+- **Core Module — Computer Vision Plant Pathology Diagnostic Engine**:
+  - High-precision classifier trained across **38 classes** (14 crop types, bacterial/fungal/viral diseases + healthy foliage).
+  - State-of-the-art **ConvNeXt-Tiny (384px)** champion model achieving **0.9969 Macro-F1** and **99.85% Accuracy**.
+  - A **0.75 confidence threshold** flags low-confidence inputs; high-confidence errors remain possible.
+  - Interactive Streamlit Diagnostic Console. Flask disease inference integration is pending.
+- **Bonus Module A — Precision Crop Recommendation Service**:
+  - Experimental top-three dataset-label ranking based on seven source-scale soil/weather features; not proven farm suitability.
+- **Bonus Module B — Smart Irrigation & Moisture Advisory**:
+  - Evidence-aware calibrated root-zone soil-water balance, with irrigation action and volume calculations.
+- **Bonus Module C — Dynamic Weather Advisory**:
+  - Validated live Open-Meteo forecasts and transparent cold, heat, rain, wind, humidity, and moisture-check rules; explicit simulated demo mode.
+- **Bonus Module D — Sustainability & Resource Optimization Score**:
+  - Transparent water, electricity, and nitrogen intensity comparison with a yield-retention check; not a carbon audit or causal savings estimate.
+- **Bonus Module E — Multilingual Farmer Assistant & Disease Explainer**:
+  - Not implemented yet; endpoint returns HTTP 501.
 
-## Setup
+---
 
-Requires Python 3.11 or later. From the repository root:
+## 2. Quickstart & Setup
 
-```sh
-python -m venv .venv
-```
+### Prerequisites
 
-Windows PowerShell:
+- Python 3.11 or later for the Flask A-D application.
+- The core console additionally needs the core team's compatible PyTorch, torchvision, timm, Streamlit, and Pillow environment. These are not yet pinned in `requirements.txt`.
+- CUDA-enabled GPU is optional for core inference.
+
+### Installation & Run
 
 ```powershell
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-Copy-Item .env.example .env
-.\.venv\Scripts\python.exe run.py
-```
+# 1. Clone repository & enter directory
+git clone https://github.com/atharva557/AGRISMART_AI.git
+cd AGRISMART_AI
 
-macOS / Linux:
+# 2. (Optional) Create & activate virtual environment
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-```sh
-source .venv/bin/activate
+# 3. Install Flask and bonus-serving dependencies
 python -m pip install -r requirements.txt
-cp .env.example .env
+
+# 4. Launch the A-D Flask application
 python run.py
 ```
 
-Copy the environment example only on first setup; preserve any existing local values. No API keys are needed for the scaffold. Never commit real credentials.
+Copy `.env.example` to `.env` only on first setup; preserve existing local values and never commit real credentials. The crop artifact was saved with scikit-learn 1.9.1, so use the pinned serving requirements rather than a mismatched global installation.
 
-Open http://127.0.0.1:5000. For optional local debug/reload mode, use `python -m flask --app run:app run --debug`. These commands start a development server; production deployment is pending.
+For the separate disease diagnostic console, first configure the core team's inference dependencies and download its Git LFS checkpoints, then run:
 
-## Team ownership
+```powershell
+git lfs pull
+streamlit run notebooks/cv_model_notebooks/testing.py
+```
 
-| Owner | Primary scope |
-| --- | --- |
-| Core ML teammate | `model/`, `notebooks/`, `utils/`, `report/`; core inference integration |
-| Atharva | Crop recommendation, irrigation, weather, sustainability services; `app/routes/advisory.py` |
-| Assistant teammate | `services/farmer_assistant.py`, `app/routes/assistant.py` |
-| Integration teammate | Configuration, shared app setup, API contracts, deployment; support for core evaluation |
-| Frontend teammate | `app/templates/`, `app/static/`, page integration |
+Access Flask at `http://127.0.0.1:5000` or Streamlit at `http://localhost:8501`. Core checkpoint downloads and console execution were not performed during the bonus merge.
 
-Use feature branches and pull requests. Keep model code in `model/`, decision logic in `services/`, and request/response handling in routes. Coordinate shared-file changes before editing them.
+---
 
-## Endpoints and integration
+## 3. Dataset & Source / License
+
+| Dataset | Source & Provenance | License | Split (Train / Val) |
+| :--- | :--- | :--- | :--- |
+| **PlantVillage** *(Core Training & Validation)* | 54,305 curated color images across 38 crop pathology categories. | CC0 / Public Domain | **43,444 train (80%)** / **10,861 val (20%)** |
+| **PlantDoc** *(In-the-Wild Generalization Test)* | Outdoor farm condition images with natural backgrounds, dirt, and varied lighting. | Open Research (MIT) | 34 held-out stress test samples |
+
+---
+
+## 4. Reported Metrics Across All Model Iterations
+
+### Core Validation Metrics (PlantVillage Held-Out Validation — 10,861 Samples)
+
+| Model Version | Backbone Architecture | Input Res | Macro-F1 (Primary) | Accuracy | Avg GPU Latency | Checkpoint |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **v1 (Baseline)** | ResNet-18 | 224 × 224 | **0.9912** | 99.43% | 7.57 ms | [model_v1.pkl](notebooks/cv_model_notebooks/model_v1.pkl) |
+| **v2 (Enhanced)** | ResNet-50 + Label Smooth | 224 × 224 | **0.9946** | 99.67% | **5.36 ms** | [model_v2.pkl](notebooks/cv_model_notebooks/model_v2.pkl) |
+| **v3 (Champion)** | **ConvNeXt-Tiny (384px)** | **384 × 384** | **0.9969** | **99.85%** | 24.51 ms | [model_v3.pkl](notebooks/cv_model_notebooks/model_v3.pkl) |
+
+Complete per-class results and core limitations are documented in [report/model_report.md](report/model_report.md). Saved A/B results and limitations are documented in the [A/B audit](report/bonus_ab_data_audit.md).
+
+## Flask Endpoints and Bonus Integration
 
 | Method | Route | Current behavior |
 | --- | --- | --- |
@@ -98,21 +102,30 @@ Use feature branches and pull requests. Keep model code in `model/`, decision lo
 
 The A-D endpoints require the versioned request envelope and explicit units/evidence described in [the shared input contract](docs/bonus_input_contract.md). They return `422` when data are missing, invalid, stale, or unsupported, and `503` when a required model/provider is unavailable. The disease endpoint should accept a validated multipart `image` upload when implemented. Do not commit or publicly serve user uploads.
 
-Advisory responses should include the recommendation, reasons, sources, and missing inputs. Module E should explain actual service outputs and sourced guidance. Module D must publish its exact formula and distinguish indicative scores from measured savings.
+---
 
 The [A-D shared input contract](docs/bonus_input_contract.md) defines units, evidence, time periods, missing-data handling, and cross-module boundaries. [Example requests](docs/examples/bonus_contract_examples.json) cover supported demonstrations and deliberate rejection cases. The [A/B data audit](report/bonus_ab_data_audit.md) records trained artifacts and saved results, checks source integrity, and identifies field-input gaps.
 
-## Model and evaluation
+## 5. Architecture Overview & Known Limitations
 
-The required inference entry point is `predict(image_path) -> class_label` in `model/predict.py`, with this CLI:
-
-```sh
-python -m model.predict --image path/to/leaf.jpg
+```mermaid
+flowchart LR
+    A["Leaf Photo Input"] --> B["Preprocessing & Norm (384px)"]
+    B --> C["ConvNeXt-Tiny Backbone (FP16 AMP)"]
+    C --> D["Softmax Probability Vector (38 Classes)"]
+    D --> E{"Top-1 Conf >= 75%?"}
+    E -- Yes --> F["Confirmed Diagnosis + Advisory"]
+    E -- No --> G["Low Confidence Alert / 'Don't Know'"]
 ```
 
-It currently exits with an explicit error because no trained model is available. Add architecture dependencies when selected. Keep weights out of Git and document a reproducible download, checksum, and load path when ready.
+### Known Limitations & Honest Failure Modes
 
-Use the organizers' exact class list, interface, and split. `classes.json` is deliberately empty. Training/validation use the provided lab-condition data; official judging uses separate field-condition data. Never train or tune on the held-out judging set.
+1. **Lab-to-Field Domain Gap:** Lab-trained models encounter accuracy drops on unsegmented in-field photos with soil, sky, or multiple leaves.
+2. **Safety Mitigations:**
+   - The core team's small external benchmark reports that the **0.75 confidence threshold** flags 44–58% of inputs. This is not a reliable out-of-distribution detector; wrong predictions can still exceed the threshold.
+   - The report records ConvNeXt-Tiny top-1 accuracy of **32.4%** on 34 field-condition samples, versus 14.7% for ResNet-18. These small-sample results do not establish production field performance.
+
+---
 
 Report macro-F1, accuracy, confusion matrix, and per-class precision/recall. Keep local validation and official test results distinct. Core evaluation integration remains pending in this local scaffold; saved bonus benchmark results are summarized in the A/B audit. Record dataset sources, licenses, pretrained backbones, and any reused third-party code as they are added. External datasets are stored locally in ignored directories.
 
@@ -167,4 +180,12 @@ Notebook 09 uses a verified 2,200-row crop dataset. Its nutrient scales and rain
 
 The user has executed these notebooks and produced local artifacts. The evaluated A serving model, its training report, validation comparison, and confusion matrix are deliberately packaged so a clean checkout can run A; other generated artifacts remain ignored. Reusable A-D logic is connected to the Flask endpoints, and the API preserves the notebook limitations and data-kind labels. See the [bonus notebook guide](report/bonus_notebooks_guide.md) and [source manifest](report/bonus_modules_sources.json) for details.
 
-Before submission, complete the mandatory disease core and report, add its real evaluation evidence, verify a clean setup can reproduce both core and bonus predictions in approximately 10 minutes, and add the 3–5 minute demo video and deployment link. Follow the brief's 10–15 September work window and preserve authentic development history.
+Before submission, connect the disease model to the required prediction interface and Flask route, finalize a reproducible core dependency setup, verify a clean checkout can reproduce core and bonus predictions, and add the 3–5 minute demo video and deployment link. Follow the brief's 10–15 September work window and preserve authentic development history.
+
+## 6. Project Links & Deliverables
+
+- **Core Model Report:** [report/model_report.md](report/model_report.md)
+- **Streamlit Evaluation Console:** [testing.py](notebooks/cv_model_notebooks/testing.py)
+- **Bonus Notebook Guide:** [report/bonus_notebooks_guide.md](report/bonus_notebooks_guide.md)
+- **Demo Video:** `[Pending / Add Demo Link Here]`
+- **Live Deployed App:** `[Pending / Add Deployment URL Here]`
