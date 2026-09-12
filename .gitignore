@@ -23,10 +23,15 @@ uploads/*
 !uploads/.gitkeep
 model/weights/*
 !model/weights/.gitkeep
+!model/weights/crop_recommendation/
+!model/weights/crop_recommendation/crop_recommendation.joblib
 outputs/figures/*
 !outputs/figures/.gitkeep
+!outputs/figures/crop_test_confusion_matrix.png
 outputs/metrics/*
 !outputs/metrics/.gitkeep
+!outputs/metrics/crop_training_report.json
+!outputs/metrics/crop_validation_comparison.csv
 outputs/predictions/*
 !outputs/predictions/.gitkeep
 *.pt

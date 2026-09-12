@@ -1,0 +1,391 @@
+{
+  "contract_version": "0.1.0",
+  "note": "Integration and test fixtures for the versioned A-D contract. Fixed timestamps are for deterministic replay, not live requests.",
+  "cases": [
+    {
+      "name": "A verified source row",
+      "request": {
+        "contract_version": "0.1.0",
+        "request_id": "example-A",
+        "module": "A",
+        "purpose": "dataset_benchmark",
+        "as_of_utc": "2026-09-12T06:00:00Z",
+        "farm": null,
+        "crop_context": null,
+        "inputs": {
+          "mode": "source_dataset_classifier",
+          "dataset_id": "atharvaingle/crop-recommendation-dataset",
+          "dataset_version": 1,
+          "dataset_sha256": "54a5a6e5408668e668667efc50de2fc867c1b875e0431b4f54dd331b0a109a4e",
+          "row_id": 0,
+          "features": {
+            "N": 90.0,
+            "P": 42.0,
+            "K": 43.0,
+            "temperature": 20.87974371,
+            "humidity": 82.00274423,
+            "ph": 6.502985292000001,
+            "rainfall": 202.9355362
+          }
+        }
+      },
+      "expected_status": "EXPERIMENTAL",
+      "expected_reason": "Adapter must verify source hash and row identity; no field suitability claim."
+    },
+    {
+      "name": "B raw sensor with missing evidence",
+      "request": {
+        "contract_version": "0.1.0",
+        "request_id": "example-B",
+        "module": "B",
+        "purpose": "simulation",
+        "as_of_utc": "2026-09-12T06:00:00Z",
+        "farm": {
+          "field_id": "demo-field-1",
+          "location": {
+            "latitude": 18.5204,
+            "longitude": 73.8567
+          },
+          "timezone": "Asia/Kolkata",
+          "area_ha": 1.0
+        },
+        "crop_context": {
+          "crop": "tomato",
+          "growth_stage": "vegetative",
+          "stage_observed_at_utc": "2026-09-12T06:00:00Z"
+        },
+        "inputs": {
+          "mode": "soil_water_balance",
+          "soil_moisture": {
+            "value": 42.0,
+            "unit": "sensor_percent",
+            "evidence": {
+              "kind": "assumed",
+              "source": "Contract example; not field evidence",
+              "method": "Simulated design fixture",
+              "observed_at_utc": "2026-09-12T06:00:00Z",
+              "period_start_utc": null,
+              "period_end_utc": null,
+              "reference_id": null
+            },
+            "sensor_id": "demo-sensor",
+            "calibration_reference": null,
+            "depth_top_m": 0.0,
+            "depth_bottom_m": 0.15
+          },
+          "soil_profile": {
+            "field_capacity": {
+              "value": 0.3,
+              "unit": "m3/m3",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": "2026-09-12T06:00:00Z",
+                "period_start_utc": null,
+                "period_end_utc": null,
+                "reference_id": null
+              }
+            },
+            "wilting_point": {
+              "value": 0.14,
+              "unit": "m3/m3",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": "2026-09-12T06:00:00Z",
+                "period_start_utc": null,
+                "period_end_utc": null,
+                "reference_id": null
+              }
+            }
+          },
+          "root_depth": {
+            "value": 0.3,
+            "unit": "m",
+            "evidence": {
+              "kind": "assumed",
+              "source": "Contract example; not field evidence",
+              "method": "Simulated design fixture",
+              "observed_at_utc": "2026-09-12T06:00:00Z",
+              "period_start_utc": null,
+              "period_end_utc": null,
+              "reference_id": null
+            }
+          },
+          "allowable_depletion_fraction": {
+            "value": 0.4,
+            "unit": "fraction",
+            "evidence": {
+              "kind": "assumed",
+              "source": "Contract example; not field evidence",
+              "method": "Simulated design fixture",
+              "observed_at_utc": "2026-09-12T06:00:00Z",
+              "period_start_utc": null,
+              "period_end_utc": null,
+              "reference_id": null
+            }
+          },
+          "crop_coefficient": {
+            "value": 0.8,
+            "unit": "fraction",
+            "evidence": {
+              "kind": "assumed",
+              "source": "Contract example; not field evidence",
+              "method": "Simulated design fixture",
+              "observed_at_utc": "2026-09-12T06:00:00Z",
+              "period_start_utc": null,
+              "period_end_utc": null,
+              "reference_id": null
+            }
+          },
+          "weather": null,
+          "recent_water_events": null,
+          "application_efficiency": null,
+          "target_area_ha": 1.0
+        }
+      },
+      "expected_status": "NEEDS_DATA",
+      "expected_missing_inputs": [
+        "inputs.soil_moisture.calibration_reference",
+        "inputs.weather",
+        "inputs.recent_water_events",
+        "inputs.application_efficiency"
+      ],
+      "expected_reason": "Uncalibrated source percentage cannot yield VWC or irrigation dose."
+    },
+    {
+      "name": "C generic forecast request",
+      "request": {
+        "contract_version": "0.1.0",
+        "request_id": "example-C",
+        "module": "C",
+        "purpose": "farm_advisory",
+        "as_of_utc": "2026-09-12T06:00:00Z",
+        "farm": {
+          "field_id": "demo-field-1",
+          "location": {
+            "latitude": 18.5204,
+            "longitude": 73.8567
+          },
+          "timezone": "Asia/Kolkata",
+          "area_ha": 1.0
+        },
+        "crop_context": null,
+        "inputs": {
+          "mode": "forecast_advisory",
+          "horizon_hours": 24
+        }
+      },
+      "expected_status": "OK",
+      "expected_reason": "Only if fresh, complete provider data are available at real request time; otherwise DATA_UNAVAILABLE or STALE_DATA. Scope is generic_weather."
+    },
+    {
+      "name": "D assumed resource comparison",
+      "request": {
+        "contract_version": "0.1.0",
+        "request_id": "example-D",
+        "module": "D",
+        "purpose": "simulation",
+        "as_of_utc": "2026-09-12T06:00:00Z",
+        "farm": {
+          "field_id": "demo-field-1",
+          "location": {
+            "latitude": 18.5204,
+            "longitude": 73.8567
+          },
+          "timezone": "Asia/Kolkata",
+          "area_ha": 1.0
+        },
+        "crop_context": {
+          "crop": "tomato",
+          "growth_stage": "vegetative",
+          "stage_observed_at_utc": "2026-09-12T06:00:00Z"
+        },
+        "inputs": {
+          "mode": "resource_comparison",
+          "baseline": {
+            "crop": "tomato",
+            "location": "Simulated demonstration site",
+            "basis": "whole_crop_cycle",
+            "data_kind": "simulated",
+            "area_ha": 1.0,
+            "period_start_utc": "2026-01-01T00:00:00Z",
+            "period_end_utc": "2026-05-01T00:00:00Z",
+            "water": {
+              "value": 4000.0,
+              "unit": "m3",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "All irrigation water applied at plot inlet"
+            },
+            "electricity": {
+              "value": 1000.0,
+              "unit": "kWh",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "All irrigation pumping electricity; no other pumping fuels"
+            },
+            "nitrogen": {
+              "value": 120.0,
+              "unit": "kg_N",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "Total nitrogen nutrient applied from mineral and organic fertilizers"
+            },
+            "harvest": {
+              "value": 30000.0,
+              "unit": "kg",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "Whole-cycle harvested output"
+            }
+          },
+          "current": {
+            "crop": "tomato",
+            "location": "Simulated demonstration site",
+            "basis": "whole_crop_cycle",
+            "data_kind": "simulated",
+            "area_ha": 1.0,
+            "period_start_utc": "2026-01-01T00:00:00Z",
+            "period_end_utc": "2026-05-01T00:00:00Z",
+            "water": {
+              "value": 3200.0,
+              "unit": "m3",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "All irrigation water applied at plot inlet"
+            },
+            "electricity": {
+              "value": 850.0,
+              "unit": "kWh",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "All irrigation pumping electricity; no other pumping fuels"
+            },
+            "nitrogen": {
+              "value": 108.0,
+              "unit": "kg_N",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "Total nitrogen nutrient applied from mineral and organic fertilizers"
+            },
+            "harvest": {
+              "value": 30000.0,
+              "unit": "kg",
+              "evidence": {
+                "kind": "assumed",
+                "source": "Contract example; not field evidence",
+                "method": "Simulated design fixture",
+                "observed_at_utc": null,
+                "period_start_utc": "2026-01-01T00:00:00Z",
+                "period_end_utc": "2026-05-01T00:00:00Z",
+                "reference_id": null
+              },
+              "accounting_scope": "Whole-cycle harvested output"
+            }
+          },
+          "comparison_evidence": {
+            "note": "Simulation assumes identical crop, period, location, soil, and accounting scope.",
+            "references": [],
+            "kind": "assumed"
+          }
+        }
+      },
+      "expected_status": "SIMULATED",
+      "expected_reason": "Custom formula may evaluate the fixture, with no measured savings claim."
+    }
+  ],
+  "negative_acceptance_cases": [
+    {
+      "change": "A: substitute C's next-day rainfall for source rainfall",
+      "expected": "UNSUPPORTED_CONTEXT"
+    },
+    {
+      "change": "A: source row values differ from pinned row",
+      "expected": "INVALID_INPUT"
+    },
+    {
+      "change": "B: divide sensor_percent by 100 without a calibration mapping",
+      "expected": "NEEDS_DATA"
+    },
+    {
+      "change": "B: observation lies in the future",
+      "expected": "INVALID_INPUT"
+    },
+    {
+      "change": "B: field_capacity <= wilting_point",
+      "expected": "INVALID_INPUT"
+    },
+    {
+      "change": "C: provider data have missing hourly intervals",
+      "expected": "DATA_UNAVAILABLE"
+    },
+    {
+      "change": "C: cached forecast exceeds acquisition-age policy",
+      "expected": "STALE_DATA"
+    },
+    {
+      "change": "D: replace measured water total with proposed irrigation",
+      "expected": "UNSUPPORTED_CONTEXT"
+    },
+    {
+      "change": "D: combine simulated baseline and measured current inputs",
+      "expected": "UNSUPPORTED_CONTEXT"
+    },
+    {
+      "change": "D: baseline water is zero",
+      "expected": "NEEDS_DATA"
+    }
+  ]
+}

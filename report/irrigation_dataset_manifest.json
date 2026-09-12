@@ -1,0 +1,31 @@
+{
+  "dataset": "Smart irrigation control system data with soil moisture, flow meter and electrovalve relay",
+  "doi": "10.17632/cjb4vy4mzj.3",
+  "version": 3,
+  "source_page": "https://data.mendeley.com/datasets/cjb4vy4mzj/3",
+  "license": "CC BY 4.0",
+  "crop": "strawberry",
+  "location": "Paraguay",
+  "files": [
+    {
+      "name": "D_moisture.txt",
+      "column": "moisture",
+      "rows": 4293,
+      "sha256": "bdf8b175ea68c720a75c22a91998320339923a4737e8bb342c416fd9b6f0a2cc",
+      "url": "https://data.mendeley.com/public-files/datasets/cjb4vy4mzj/files/c23ee1a2-e7a5-4e02-8247-bc8f2e13ba3e/file_downloaded"
+    },
+    {
+      "name": "D_valve.txt",
+      "column": "relay",
+      "rows": 17427,
+      "sha256": "133cde7618a570dbdb3281e8ea1455071791fdbbc35de4514864f66f565afd28",
+      "url": "https://data.mendeley.com/public-files/datasets/cjb4vy4mzj/files/46ed836d-552d-4aa4-9d99-8fd71abba892/file_downloaded"
+    }
+  ],
+  "notes": [
+    "File names, columns, row counts, and checksums were inspected in the published file previews.",
+    "Moisture is the source sensor percentage, not verified volumetric water content.",
+    "The derived supervised target is an observed valve opening within the next hour while currently closed.",
+    "Weather, crop-stage variation, and agronomic optimality are not labeled by this dataset."
+  ]
+}

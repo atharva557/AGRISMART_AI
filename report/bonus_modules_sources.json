@@ -1,0 +1,36 @@
+{
+  "reviewed_on": "2026-09-12",
+  "crop_recommendation": {
+    "title": "Crop Recommendation Dataset",
+    "author": "Atharva Ingle",
+    "source_page": "https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset",
+    "version": 1,
+    "license_as_listed_by_publisher": "Apache 2.0",
+    "download_url": "https://www.kaggle.com/api/v1/datasets/download/atharvaingle/crop-recommendation-dataset?datasetVersionNumber=1",
+    "filename": "Crop_recommendation.csv",
+    "sha256": "54a5a6e5408668e668667efc50de2fc867c1b875e0431b4f54dd331b0a109a4e",
+    "rows": 2200,
+    "columns": ["N", "P", "K", "temperature", "humidity", "ph", "rainfall", "label"],
+    "labels": ["apple", "banana", "blackgram", "chickpea", "coconut", "coffee", "cotton", "grapes", "jute", "kidneybeans", "lentil", "maize", "mango", "mothbeans", "mungbean", "muskmelon", "orange", "papaya", "pigeonpeas", "pomegranate", "rice", "watermelon"],
+    "limitations": ["Publisher describes augmented India rainfall, climate, and fertilizer data", "N/P/K soil-lab units and rainfall aggregation period are unresolved", "No farm, date, district, season, or yield outcomes for independent field validation"]
+  },
+  "weather": {
+    "provider": "Open-Meteo",
+    "documentation": "https://open-meteo.com/en/docs",
+    "terms": "https://open-meteo.com/en/terms",
+    "api": "https://api.open-meteo.com/v1/forecast",
+    "data_license": "CC BY 4.0",
+    "free_api_scope": "Non-commercial use, subject to provider terms",
+    "advisory_thresholds": "Configurable project assumptions; not official warning or crop-disease thresholds"
+  },
+  "sustainability": {
+    "formula_version": "1.0",
+    "formula_authority": "Project-defined indicative resource-use comparison; not a certification standard",
+    "weights": {"water_m3": 0.4, "electricity_kwh": 0.3, "nitrogen_kg": 0.3},
+    "reference_parity_score": 50,
+    "yield_retention_floor": 0.95,
+    "concept_reference": "https://www.fao.org/in-action/remote-sensing-for-water-productivity/wapor-data/",
+    "default_data": "Explicitly simulated farm records",
+    "limitations": ["No measured or causal savings established", "No carbon conversion", "Excludes total consumed water, biodiversity, soil health, and nutrient balance"]
+  }
+}

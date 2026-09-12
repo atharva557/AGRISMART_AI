@@ -1,0 +1,10 @@
+# Separate from the Flask app dependencies.
+jupyterlab>=4.0,<5.0
+ipykernel>=6.0,<8.0
+nbformat>=5.10,<6.0
+nbclient>=0.10,<1.0
+pandas>=2.2,<4.0
+matplotlib>=3.9,<4.0
+scikit-learn>=1.5,<2.0
+joblib>=1.4,<2.0
+requests>=2.32,<3.0

@@ -1,0 +1,224 @@
+{
+  "audit_date": "2026-09-12",
+  "contract_version": "0.1.0",
+  "method": "Read-only source/report inspection, CSV counts and timestamps, saved split IDs, artifact hashes. No notebooks, models, inference, or training executed.",
+  "crop": {
+    "source": "https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset",
+    "dataset": {
+      "path": "data/crop_recommendation/raw/Crop_recommendation.csv",
+      "sha256": "54a5a6e5408668e668667efc50de2fc867c1b875e0431b4f54dd331b0a109a4e",
+      "matches_source_manifest": true,
+      "rows": 2200,
+      "columns": [
+        "N",
+        "P",
+        "K",
+        "temperature",
+        "humidity",
+        "ph",
+        "rainfall",
+        "label"
+      ],
+      "exact_duplicate_rows": 0,
+      "missing_fields": 0,
+      "class_counts": {
+        "apple": 100,
+        "banana": 100,
+        "blackgram": 100,
+        "chickpea": 100,
+        "coconut": 100,
+        "coffee": 100,
+        "cotton": 100,
+        "grapes": 100,
+        "jute": 100,
+        "kidneybeans": 100,
+        "lentil": 100,
+        "maize": 100,
+        "mango": 100,
+        "mothbeans": 100,
+        "mungbean": 100,
+        "muskmelon": 100,
+        "orange": 100,
+        "papaya": 100,
+        "pigeonpeas": 100,
+        "pomegranate": 100,
+        "rice": 100,
+        "watermelon": 100
+      },
+      "feature_ranges": {
+        "N": {
+          "min": 0.0,
+          "max": 140.0
+        },
+        "P": {
+          "min": 5.0,
+          "max": 145.0
+        },
+        "K": {
+          "min": 5.0,
+          "max": 205.0
+        },
+        "temperature": {
+          "min": 8.825674745,
+          "max": 43.67549305
+        },
+        "humidity": {
+          "min": 14.25803981,
+          "max": 99.98187601
+        },
+        "ph": {
+          "min": 3.504752314,
+          "max": 9.93509073
+        },
+        "rainfall": {
+          "min": 20.21126747,
+          "max": 298.5601175
+        }
+      },
+      "non_finite_values": 0,
+      "conflicting_identical_feature_vectors": 0
+    },
+    "split_audit": {
+      "sizes": {
+        "train": 1320,
+        "validation": 440,
+        "test": 440
+      },
+      "duplicate_row_ids_within_splits": {
+        "train": 0,
+        "validation": 0,
+        "test": 0
+      },
+      "shared_row_ids": {
+        "train/validation": 0,
+        "train/test": 0,
+        "validation/test": 0
+      },
+      "complete_source_partition": true,
+      "limitation": "No farm/time/group identifiers; this cannot rule out related augmented records."
+    },
+    "saved_run_at_utc": "2026-09-11T19:57:02.014816+00:00",
+    "selected_model": "random_forest",
+    "saved_test_metrics": {
+      "macro_f1": 0.9908691003415904,
+      "accuracy": 0.990909090909091,
+      "top3_accuracy": 1.0
+    },
+    "eligibility": {
+      "dataset_benchmark": "eligible_as_experimental",
+      "farm_suitability": "unsupported_pending_input_mapping_and_field_validation"
+    },
+    "blocking_gaps": [
+      "N/P/K physical units and extraction methods unresolved",
+      "Rainfall period and temperature/humidity aggregation unresolved",
+      "No independent farm/season labels or suitability outcomes"
+    ]
+  },
+  "irrigation": {
+    "source": "https://data.mendeley.com/datasets/cjb4vy4mzj/3",
+    "datasets": [
+      {
+        "path": "data/irrigation/raw/D_moisture.txt",
+        "sha256": "bdf8b175ea68c720a75c22a91998320339923a4737e8bb342c416fd9b6f0a2cc",
+        "matches_source_manifest": true,
+        "rows": 4293,
+        "columns": [
+          "moisture",
+          "time_stamp"
+        ],
+        "exact_duplicate_rows": 0,
+        "missing_fields": 0,
+        "timestamp_timezone": "UTC per publisher",
+        "first_timestamp": "2022-07-12T00:03:51Z",
+        "last_timestamp": "2022-09-16T23:56:08Z",
+        "duplicate_timestamps": 0,
+        "out_of_order_transitions": 0,
+        "median_gap_minutes": 19.916666666666668,
+        "max_gap_minutes": 3783.6833333333334,
+        "value_min": 68.57,
+        "value_max": 86.94
+      },
+      {
+        "path": "data/irrigation/raw/D_valve.txt",
+        "sha256": "133cde7618a570dbdb3281e8ea1455071791fdbbc35de4514864f66f565afd28",
+        "matches_source_manifest": true,
+        "rows": 17427,
+        "columns": [
+          "relay",
+          "time_stamp"
+        ],
+        "exact_duplicate_rows": 0,
+        "missing_fields": 0,
+        "timestamp_timezone": "UTC per publisher",
+        "first_timestamp": "2022-07-12T00:00:00Z",
+        "last_timestamp": "2022-09-16T23:57:37Z",
+        "duplicate_timestamps": 0,
+        "out_of_order_transitions": 0,
+        "median_gap_minutes": 5.0,
+        "max_gap_minutes": 3769.9,
+        "value_min": 0.0,
+        "value_max": 1.0,
+        "relay_counts": {
+          "0": 14038,
+          "1": 3389
+        }
+      }
+    ],
+    "saved_run_at_utc": "2026-09-11T15:33:55.041459+00:00",
+    "selected_model": "random_forest",
+    "threshold": 0.85,
+    "saved_test_metrics": {
+      "macro_f1": 0.6012534553426747,
+      "positive_precision": 0.2777777777777778,
+      "positive_recall": 0.23809523809523808,
+      "positive_f1": 0.2564102564102564,
+      "average_precision": 0.3639449012172388,
+      "accuracy": 0.8994800693240901
+    },
+    "saved_confusion_matrix": [
+      [
+        509,
+        26
+      ],
+      [
+        32,
+        10
+      ]
+    ],
+    "saved_split_sizes": {
+      "training_rows": 2408,
+      "validation_rows": 435,
+      "test_rows": 577
+    },
+    "eligibility": {
+      "controller_behavior_benchmark": "eligible_as_experimental",
+      "farm_irrigation_dose": "unsupported_by_current_training_data"
+    },
+    "blocking_gaps": [
+      "Source moisture percent has no verified mapping to arbitrary field-sensor VWC",
+      "Relay commands are not optimal watering labels or independent valve/flow confirmation",
+      "Crop-stage/weather/soil-root calibration absent from training features",
+      "Only 10 of 42 positive test windows detected; correlated windows are not independent irrigation events"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "model/weights/crop_recommendation/crop_recommendation.joblib",
+      "bytes": 9292607,
+      "sha256": "995b640801d9db912f752dfd859192d7591c2f6540c7a45c9a0794371435846d",
+      "selected_model_per_saved_report": "random_forest",
+      "matches_training_report_hash": true,
+      "verification": "File read and hashed only; no model deserialization or inference",
+      "note": "Matches the artifact recorded in the training report"
+    },
+    {
+      "path": "model/weights/irrigation/irrigation_start_model.joblib",
+      "bytes": 1811785,
+      "sha256": "28521c224a66236cdc17775139db3184e78204b78abceb5cc77564572504a98e",
+      "selected_model_per_saved_report": "random_forest",
+      "matches_training_report_hash": null,
+      "verification": "File read and hashed only; no model deserialization or inference",
+      "note": "Original irrigation report has no model hash; this audit fingerprints the present file"
+    }
+  ]
+}

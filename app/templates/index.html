@@ -3,27 +3,112 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AgriSmart AI</title>
+  <title>AgriSmart AI · Farm advisory prototypes</title>
+  <meta name="description" content="Evidence-aware crop, irrigation, weather, and sustainability advisory prototypes.">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script defer src="{{ url_for('static', filename='js/app.js') }}"></script>
 </head>
 <body>
+  <header class="hero">
+    <div class="hero__content">
+      <p class="eyebrow">SIH 2026 · Bonus modules A–D</p>
+      <h1>Farm decisions with the evidence left visible.</h1>
+      <p class="lead">Run the crop, irrigation, weather, and resource-use prototypes from one dashboard. Experimental and simulated outputs stay clearly labelled.</p>
+      <p id="connection" class="connection" role="status">Checking backend…</p>
+    </div>
+  </header>
+
   <main>
-    <p class="eyebrow">SIH 2026 · Project scaffold</p>
-    <h1>AgriSmart AI</h1>
-    <p>Crop disease detection and farm advisory.</p>
-    <p id="connection" role="status">Checking backend…</p>
-    <h2>Modules planned</h2>
-    <ul>
-      <li>Core: crop disease detection</li>
-      <li>A: crop recommendation</li>
-      <li>B: smart irrigation</li>
-      <li>C: weather intelligence</li>
-      <li>D: sustainability score</li>
-      <li>E: farmer assistant</li>
-    </ul>
-    <p>Feature implementation is pending. No trained predictions or recommendations are available yet.</p>
-    <a href="{{ url_for('main.result') }}">View the result template</a>
+    <section class="notice" aria-labelledby="scope-title">
+      <div>
+        <p class="eyebrow">Current scope</p>
+        <h2 id="scope-title">Working prototypes, not autonomous farm control</h2>
+      </div>
+      <p>Module A is dataset-scoped. Module B needs calibrated measurements. Module C uses a forecast provider. Module D compares recorded or simulated whole-cycle inputs.</p>
+    </section>
+
+    <div class="module-grid">
+      <section class="module-card" aria-labelledby="module-a-title">
+        <div class="module-card__heading">
+          <span class="module-letter">A</span>
+          <div><p class="tag">Experimental ML</p><h2 id="module-a-title">Crop candidates</h2></div>
+        </div>
+        <p>Ranks three crop labels using the pinned seven-feature dataset scale. Scores are not calibrated field-suitability probabilities.</p>
+        <form id="crop-form" class="input-grid">
+          <label>N<input name="N" type="number" step="any" value="90" required></label>
+          <label>P<input name="P" type="number" step="any" value="42" required></label>
+          <label>K<input name="K" type="number" step="any" value="43" required></label>
+          <label>Temperature °C<input name="temperature" type="number" step="any" value="20.8797" required></label>
+          <label>Humidity %<input name="humidity" type="number" step="any" value="82.0027" required></label>
+          <label>pH<input name="ph" type="number" step="any" value="6.503" required></label>
+          <label>Source rainfall value<input name="rainfall" type="number" step="any" value="202.9355" required></label>
+          <button type="submit">Rank crop labels</button>
+        </form>
+        <div id="crop-output" class="output" aria-live="polite"></div>
+      </section>
+
+      <section class="module-card" aria-labelledby="module-b-title">
+        <div class="module-card__heading">
+          <span class="module-letter">B</span>
+          <div><p class="tag">Simulation-ready</p><h2 id="module-b-title">Irrigation balance</h2></div>
+        </div>
+        <p>Uses a transparent root-zone water balance. The defaults are an explicit simulation, not real sensor evidence.</p>
+        <form id="irrigation-form" class="input-grid">
+          <label>Moisture m³/m³<input name="moisture" type="number" min="0" max="1" step="0.01" value="0.20" required></label>
+          <label>Field capacity<input name="fieldCapacity" type="number" min="0" max="1" step="0.01" value="0.30" required></label>
+          <label>Wilting point<input name="wiltingPoint" type="number" min="0" max="1" step="0.01" value="0.14" required></label>
+          <label>Root depth m<input name="rootDepth" type="number" min="0.01" step="0.01" value="0.30" required></label>
+          <label>Depletion fraction<input name="depletion" type="number" min="0.01" max="1" step="0.01" value="0.40" required></label>
+          <label>Crop coefficient<input name="cropCoefficient" type="number" min="0" step="0.01" value="0.80" required></label>
+          <label>Forecast ET₀ mm<input name="et0" type="number" min="0" step="0.1" value="5" required></label>
+          <label>Forecast rain mm<input name="rain" type="number" min="0" step="0.1" value="0" required></label>
+          <label>Recent effective water mm<input name="recentWater" type="number" min="0" step="0.1" value="0" required></label>
+          <label>Application efficiency<input name="efficiency" type="number" min="0.01" max="1" step="0.01" value="0.80" required></label>
+          <label>Target area ha<input name="area" type="number" min="0.0001" step="any" value="1" required></label>
+          <button type="submit">Calculate advice</button>
+        </form>
+        <div id="irrigation-output" class="output" aria-live="polite"></div>
+      </section>
+
+      <section class="module-card" aria-labelledby="module-c-title">
+        <div class="module-card__heading">
+          <span class="module-letter">C</span>
+          <div><p class="tag">Live forecast</p><h2 id="module-c-title">Weather intelligence</h2></div>
+        </div>
+        <p>Checks a complete future 24-hour Open-Meteo window for rain, heat, cold, wind, humidity, and reference ET₀ conditions.</p>
+        <form id="weather-form" class="input-grid">
+          <label>Latitude<input name="latitude" type="number" min="-90" max="90" step="any" value="18.5204" required></label>
+          <label>Longitude<input name="longitude" type="number" min="-180" max="180" step="any" value="73.8567" required></label>
+          <div class="actions">
+            <button type="submit">Check live forecast</button>
+            <button type="button" class="button--secondary" id="weather-demo">Run simulated demo</button>
+          </div>
+        </form>
+        <div id="weather-output" class="output" aria-live="polite"></div>
+      </section>
+
+      <section class="module-card" aria-labelledby="module-d-title">
+        <div class="module-card__heading">
+          <span class="module-letter">D</span>
+          <div><p class="tag">Transparent formula</p><h2 id="module-d-title">Sustainability comparison</h2></div>
+        </div>
+        <p>Compares water, electricity, and nitrogen per hectare, with a yield-retention safeguard. Defaults are simulated.</p>
+        <form id="sustainability-form" class="input-grid">
+          <label>Baseline water m³<input name="baselineWater" type="number" min="0.01" step="any" value="4000" required></label>
+          <label>Current water m³<input name="currentWater" type="number" min="0" step="any" value="3200" required></label>
+          <label>Baseline electricity kWh<input name="baselineElectricity" type="number" min="0.01" step="any" value="1000" required></label>
+          <label>Current electricity kWh<input name="currentElectricity" type="number" min="0" step="any" value="850" required></label>
+          <label>Baseline nitrogen kg N<input name="baselineNitrogen" type="number" min="0.01" step="any" value="120" required></label>
+          <label>Current nitrogen kg N<input name="currentNitrogen" type="number" min="0" step="any" value="108" required></label>
+          <label>Baseline harvest kg<input name="baselineHarvest" type="number" min="0.01" step="any" value="30000" required></label>
+          <label>Current harvest kg<input name="currentHarvest" type="number" min="0" step="any" value="30000" required></label>
+          <button type="submit">Compare resources</button>
+        </form>
+        <div id="sustainability-output" class="output" aria-live="polite"></div>
+      </section>
+    </div>
   </main>
+
+  <footer>AgriSmart AI · Recommendations require local agronomic review before field use.</footer>
 </body>
 </html>

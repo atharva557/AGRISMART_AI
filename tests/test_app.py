@@ -22,13 +22,19 @@ class AppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["status"], "ok")
 
-    def test_features_remain_explicit_placeholders(self):
-        for path in ("disease/predict", "crops/recommend", "irrigation/advise",
-                     "weather/advise", "sustainability/score", "assistant/chat"):
+    def test_unimplemented_team_modules_remain_explicit_placeholders(self):
+        for path in ("disease/predict", "assistant/chat"):
             with self.subTest(path=path):
                 response = self.client.post(f"/api/{path}", json={})
                 self.assertEqual(response.status_code, 501)
                 self.assertEqual(response.json["error"]["code"], "NOT_IMPLEMENTED")
+
+    def test_bonus_routes_validate_json(self):
+        for path in ("crops/recommend", "irrigation/advise", "weather/advise", "sustainability/score"):
+            with self.subTest(path=path):
+                response = self.client.post(f"/api/{path}", data="not json", content_type="text/plain")
+                self.assertEqual(response.status_code, 422)
+                self.assertEqual(response.json["status"], "INVALID_INPUT")
 
 
 if __name__ == "__main__":
