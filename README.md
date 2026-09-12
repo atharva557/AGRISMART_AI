@@ -24,6 +24,17 @@ Core experiments and the diagnostic console are in `notebooks/cv_model_notebooks
 - **Bonus Module E — Multilingual Farmer Assistant & Disease Explainer**:
   - Not implemented yet; endpoint returns HTTP 501.
 
+### Bonus contribution in simple terms
+
+| Module | Question it helps answer | Method used in the app |
+| --- | --- | --- |
+| A | Which three crop labels best match these experimental soil/weather values? | Trained random forest; not validated farm suitability |
+| B | Does this assumed root-zone water balance suggest watering, and how much? | Transparent calculation, not the experimental irrigation ML model |
+| C | What forecast conditions should I inspect or prepare for? | Weather-provider data and threshold rules |
+| D | How do water, electricity, and nitrogen use compare with a baseline? | Published project formula with a yield-retention check |
+
+The bonus contribution includes experiment notebooks, reusable services, numeric/unit checks, JSON API routes, an interactive dashboard, readable results, and non-training tests. Among bonus modules A-D, only A serves a trained ML model. See the [A-D demo and notebook guide](report/bonus_notebooks_guide.md) for a short walkthrough.
+
 ---
 
 ## 2. Quickstart & Setup
@@ -104,7 +115,9 @@ The A-D endpoints require the versioned request envelope and explicit units/evid
 
 ---
 
-The [A-D shared input contract](docs/bonus_input_contract.md) defines units, evidence, time periods, missing-data handling, and cross-module boundaries. [Example requests](docs/examples/bonus_contract_examples.json) cover supported demonstrations and deliberate rejection cases. The [A/B data audit](report/bonus_ab_data_audit.md) records trained artifacts and saved results, checks source integrity, and identifies field-input gaps.
+The [A-D API guide](docs/bonus_input_contract.md) documents implemented inputs, outputs, units, errors, and cross-module boundaries, with planned checks labelled separately. [Example requests](docs/examples/bonus_contract_examples.json) include model-scale A, simulated B/C/D, and rejection cases; its planned acceptance cases are not claims of passing checks. The [A/B data audit](report/bonus_ab_data_audit.md) preserves saved benchmark results and field-input gaps.
+
+Current validation is not field certification: unknown fields are ignored, supporting reference IDs are not authenticated, B does not enforce reading age or weather-period alignment, and D does not verify that measured production cycles have ended. C checks forecast acquisition age and coverage but uses generic thresholds, even when crop metadata are supplied. Keep demonstrations labelled experimental/simulated until these implementation and field-validation gaps are resolved.
 
 ## 5. Architecture Overview & Known Limitations
 
@@ -114,7 +127,7 @@ flowchart LR
     B --> C["ConvNeXt-Tiny Backbone (FP16 AMP)"]
     C --> D["Softmax Probability Vector (38 Classes)"]
     D --> E{"Top-1 Conf >= 75%?"}
-    E -- Yes --> F["Confirmed Diagnosis + Advisory"]
+    E -- Yes --> F["Model Prediction (not a confirmed diagnosis)"]
     E -- No --> G["Low Confidence Alert / 'Don't Know'"]
 ```
 
@@ -127,7 +140,7 @@ flowchart LR
 
 ---
 
-Report macro-F1, accuracy, confusion matrix, and per-class precision/recall. Keep local validation and official test results distinct. Core evaluation integration remains pending in this local scaffold; saved bonus benchmark results are summarized in the A/B audit. Record dataset sources, licenses, pretrained backbones, and any reused third-party code as they are added. External datasets are stored locally in ignored directories.
+Keep local validation and official judging results distinct. Core notebooks/reports are available, but the required prediction interface and Flask disease route still need integration. Saved bonus benchmark results are summarized in the A/B audit. Preserve source/license attribution and do not commit external datasets or private field records.
 
 ## Checks and submission
 
@@ -137,7 +150,7 @@ With the Python environment active:
 python -m unittest discover -s tests -v
 ```
 
-These checks cover the Flask shell, A model inference, B and D formulas, C rule evaluation with deterministic provider data, and explicit A-D failure states. They do not retrain models or independently reproduce saved benchmark metrics. The first six core notebooks contain starter headings; use `model/` for reusable core experiment code. A real `tests/sample_leaf.jpg` can be added locally from permitted data; none is bundled.
+The current suite contains 12 tests covering the Flask shell, A model inference, B and D formulas, C rule evaluation with deterministic provider data, and selected A-D failure states. They do not execute notebook cells, retrain models, authenticate field evidence, or independently reproduce saved benchmark metrics. A real `tests/sample_leaf.jpg` can be added locally from permitted data; none is bundled. See [tests/README.md](tests/README.md) for fixture requirements.
 
 ## Irrigation notebook
 

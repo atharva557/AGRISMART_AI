@@ -4,14 +4,16 @@ Audit date: 2026-09-12. Contract: [version 0.1.0](../docs/bonus_input_contract.m
 
 The audit reads existing data, saved training reports, split row IDs, and model file bytes. It does not execute notebooks, deserialize models, run inference, or retrain. Metrics below are from the user's saved runs, not newly reproduced results. Exact measurements and artifact fingerprints are in [bonus_ab_data_audit.json](bonus_ab_data_audit.json).
 
+**Integration note (2026-09-12):** A-D have since been connected to the Flask API and dashboard, and serving tests include saved A-model inference. The JSON audit remains a historical source/run-integrity snapshot, not a current API acceptance report. A serves its dataset-scoped classifier; B deliberately serves a separate water-balance calculation, not the saved controller model. Current behavior and unimplemented field-use gates are documented in the [API guide](../docs/bonus_input_contract.md).
+
 ## Trained model inventory
 
 | Module | Saved selected model | Evidence | Current scope |
 | --- | --- | --- | --- |
 | A | Random forest | Export exists; SHA-256 matches the hash in the saved training report | Source-dataset crop-label benchmark |
 | B | Random forest, threshold 0.85 | Export exists; saved run reports training/evaluation; current file fingerprint recorded by this audit | Observed controller behavior on one strawberry field |
-| C | No trained model needed | Forecast client and rule outputs were saved by the user | Weather advisory prototype |
-| D | No trained model needed | Formula output was saved by the user | Simulated resource-use comparison |
+| C | No trained model needed | Forecast client and rule outputs were saved by the user | Integrated generic forecast rules and explicit simulated demo |
+| D | No trained model needed | Formula output was saved by the user | Integrated simulated/measured-input resource comparison; records are not authenticated |
 
 The irrigation training report does not include an artifact hash. This audit fingerprints the file now but cannot retroactively prove it is the exact file evaluated in that report. Future export metadata should bind artifact, source data, feature order, training configuration, and evaluation together.
 
@@ -70,12 +72,12 @@ Verified locally:
 
 The physical-input basis for a soil-water balance is described in [FAO-56 chapter 8](https://www.fao.org/4/X0490E/x0490e0e.htm). A published equation does not validate local parameters or an implementation.
 
-## Next implementation requirements
+## Remaining implementation and validation work
 
-1. Implement validators/adapters for the contract and its explicit failure cases; keep endpoint status and evidence scope visible.
+1. Extend the existing service validators with strict unknown-field schemas and reference/evidence verification. Keep implemented and planned acceptance cases separate.
 2. For A, resolve source semantics or select independently documented suitability profiles/data before accepting live farm inputs. Preserve the existing model and its benchmark.
-3. For B, establish soil/sensor calibration and parameter evidence, then review water-balance behavior against controlled scenarios. Keep controller ML outside the irrigation-action path.
+3. For B, verify soil/sensor calibration, root-zone/stage applicability, reading age, and aligned weather/water-event periods. Continue controlled water-balance tests and independent field review; keep controller ML outside the irrigation-action path.
 4. Bind future model exports to evaluation hashes and publish only results actually produced by user-run experiments.
-5. Validate cross-module time periods and units before frontend connection. Weather forecasts cannot silently become A climate features or D measured savings.
+5. Frontend connection is complete; automatic cross-module adapters are not. Validate periods and units before adding them. Weather forecasts cannot silently become A climate features or D measured savings; D also needs completed-cycle and baseline-evidence verification.
 
-No new training, model execution, Git commit, or Git push was performed for this audit.
+The original audit did not run models or training. Later serving verification and Git integration are separate work; the saved benchmark metrics and audit fingerprints above have not been rewritten as new results.
