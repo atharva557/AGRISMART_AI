@@ -1,0 +1,42 @@
+<!--
+  _assistant_widget.html
+  Include this in result.html right after the core detection result is
+  rendered, using Jinja's include statement (not written out literally
+  here on purpose — writing it verbatim in this comment would make Jinja
+  execute it and include this file into itself, infinitely).
+
+  It expects the page to already have, as inline JS globals set by
+  result.html's own <script> block (from your prediction response):
+      window.detectionContext = {
+        disease_label: "...", confidence: 0.91, crop: "Tomato", stage: "...",
+        irrigation: {...} | null, weather: {...} | null,
+        sustainability: {...} | null, crop_recommendation: {...} | null
+      };
+-->
+<section id="assistant-widget" class="assistant-widget">
+  <div class="assistant-header">
+    <h3>🌾 Farmer Assistant</h3>
+    <select id="assistant-lang">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी (Hindi)</option>
+      <option value="gu">ગુજરાતી (Gujarati)</option>
+      <option value="mr">मराठी (Marathi)</option>
+      <option value="ta">தமிழ் (Tamil)</option>
+      <option value="te">తెలుగు (Telugu)</option>
+      <option value="kn">ಕನ್ನಡ (Kannada)</option>
+      <option value="bn">বাংলা (Bengali)</option>
+      <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+    </select>
+  </div>
+
+  <div id="assistant-explanation" class="assistant-explanation">Loading explanation…</div>
+
+  <div id="assistant-chat-log" class="assistant-chat-log"></div>
+
+  <form id="assistant-chat-form" class="assistant-chat-form">
+    <input id="assistant-input" type="text" placeholder="Ask a question, e.g. 'Should I water today?'" autocomplete="off" />
+    <button type="submit">Send</button>
+  </form>
+</section>
+
+<script src="{{ url_for('static', filename='js/assistant.js') }}"></script>
