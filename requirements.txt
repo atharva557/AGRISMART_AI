@@ -6,5 +6,10 @@ pandas==3.0.5
 requests==2.34.2
 scikit-learn==1.9.1
 
+# Bonus E — Farmer Assistant (GenAI)
+google-genai>=1.0.0
+deep-translator>=1.11.4
+pytest>=8.0.0
+
 # Core crop-disease architecture dependencies remain pending.
 # Jupyter-only tools stay in requirements-notebooks.txt.
