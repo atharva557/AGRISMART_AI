@@ -33,5 +33,17 @@
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4"
   },
-  "dependencies": {}
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atharva557/AGRISMART_AI.git"
+  },
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/atharva557/AGRISMART_AI/issues"
+  },
+  "homepage": "https://github.com/atharva557/AGRISMART_AI#readme"
 }

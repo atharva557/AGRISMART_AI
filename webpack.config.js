@@ -23,6 +23,10 @@ module.exports = (env, argv) => {
     module: {
       rules: [
         {
+          test: /\.js$/,
+          type: 'javascript/auto',
+        },
+        {
           test: /\.css$/,
           use: [
             MiniCssExtractPlugin.loader,

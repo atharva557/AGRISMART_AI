@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function initFileUpload() {
   const uploadInput = DOM.byId('imageUpload');
-  const uploadArea = DOM.qs('[role="button"][aria-label="Upload image area"]');
+  const uploadArea = DOM.byId('uploadArea');
   const previewContainer = DOM.byId('imagePreview');
   
   if (!uploadInput || !uploadArea) return;
@@ -147,7 +147,7 @@ async function handleAnalyze() {
     return;
   }
   
-  const resultContainer = DOM.byId('result');
+  const resultContainer = DOM.byId('analysisResult');
   if (!resultContainer) return;
   
   UI.showLoading(resultContainer, 'Analyzing image...');
