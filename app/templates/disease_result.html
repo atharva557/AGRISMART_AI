@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Disease Detection Result — AgriSmart AI{% endblock %}
+
+{% block meta_description %}View your crop disease detection results with AI-powered diagnosis and treatment recommendations.{% endblock %}
+
+{% block content %}
+<section class="py-10 sm:py-12 bg-gray-100">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Page Header -->
+    <div class="max-w-3xl mx-auto text-center mb-8">
+      <p class="inline-flex items-center gap-2 px-4 py-1.5 bg-green-100 rounded-full mb-4 text-sm font-semibold text-green-700">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Analysis Complete
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Detection Results</h1>
+      <p class="text-base text-gray-600">Review your disease detection results and recommended actions below.</p>
+    </div>
+
+    <!-- Results Container — populated by JavaScript -->
+    <div id="resultContainer" role="main" aria-live="polite"></div>
+
+    <!-- Disclaimer -->
+    <div class="max-w-4xl mx-auto mt-8">
+      <div class="card bg-amber-50 border-amber-200">
+        <h2 class="text-sm font-semibold text-amber-900 mb-2">Important Disclaimer</h2>
+        <div class="text-sm text-amber-800 space-y-2">
+          <p>This AI-powered diagnosis is provided for informational purposes only and should not replace professional agricultural advice.</p>
+          <ul class="list-disc list-inside space-y-1 ml-1">
+            <li>Predictions below 75% confidence should be verified by qualified agronomists</li>
+            <li>Lab-trained models may show reduced accuracy on field photos</li>
+            <li>Always consult local experts before taking field action</li>
+            <li>Treatment effectiveness varies by location and growing conditions</li>
+          </ul>
+          <p class="font-semibold">For critical decisions, seek professional agricultural guidance from qualified experts in your region.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+{# Legacy scripts for the result page — must load in this order #}
+<script src="{{ url_for('static', filename='js/utils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/disease.js') }}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    DiseaseDetection.displayResults();
+  });
+</script>
+{% endblock %}

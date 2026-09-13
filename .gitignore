@@ -57,3 +57,15 @@ temp/
 Thumbs.db
 .idea/
 .vscode/
+
+# Build system and generated assets
+node_modules/
+package-lock.json
+app/static/css/dist/
+app/static/js/dist/
+*.min.css
+*.min.js
+*.map
+
+# Temporary files
+temp_homepage.html

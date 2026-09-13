@@ -1,0 +1,207 @@
+<style>
+  @keyframes slideFromLeft {
+    from { opacity: 0; transform: translateX(-18px); }
+    to   { opacity: 1; transform: translateX(0); }
+  }
+  .nav-brand-slide {
+    animation: slideFromLeft 0.40s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nav-brand-slide { animation: none; }
+  }
+</style>
+
+<header class="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+  <nav class="container mx-auto px-4 sm:px-6 lg:px-8" role="navigation" aria-label="Main navigation">
+    <div class="flex items-center justify-between h-16">
+
+      <!-- Logo and Brand — slides in from left on page load -->
+      <div class="flex items-center">
+        <a href="/"
+           class="flex items-center gap-3 text-gray-900 hover:text-green-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 focus-visible:rounded-md nav-brand-slide"
+           aria-label="AgriSmart AI — Home">
+          <svg class="w-8 h-8 flex-shrink-0" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="20" cy="20" r="18" fill="#176a46" opacity="0.1"/>
+            <path d="M20 8C16 8 13 11 13 15C13 17 14 18.5 15 19.5C14 21 12 23 12 26C12 29 14.5 32 20 32C25.5 32 28 29 28 26C28 23 26 21 25 19.5C26 18.5 27 17 27 15C27 11 24 8 20 8Z" fill="#176a46"/>
+            <circle cx="20" cy="14" r="2" fill="#dcefa8"/>
+          </svg>
+          <div class="flex flex-col">
+            <span class="text-lg font-bold leading-tight">AgriSmart AI</span>
+            <span class="text-xs text-gray-500 hidden sm:block">Smart Agriculture</span>
+          </div>
+        </a>
+      </div>
+
+      <!-- Desktop Navigation -->
+      <div class="hidden md:flex items-center gap-1">
+        <a href="/"
+           data-nav-link
+           class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
+          Home
+        </a>
+        <a href="/disease"
+           data-nav-link
+           class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
+          Disease Detection
+        </a>
+        <a href="/advisory"
+           data-nav-link
+           class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
+          Advisory
+        </a>
+        <a href="/about"
+           data-nav-link
+           class="px-4 py-2 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600">
+          About
+        </a>
+
+        <!-- System Status Indicator -->
+        <div class="ml-3 flex items-center gap-2 pl-3 border-l border-gray-200">
+          <div id="health-indicator"
+               class="w-2 h-2 rounded-full bg-gray-300 transition-colors duration-300"
+               role="status"
+               aria-label="System status: checking"
+               title="Checking system status...">
+          </div>
+          <span id="health-label" class="text-xs text-gray-400 hidden lg:block">Checking…</span>
+        </div>
+      </div>
+
+      <!-- Mobile Menu Button -->
+      <button
+        id="mobile-menu-button"
+        class="md:hidden p-2 text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600"
+        aria-label="Open navigation menu"
+        aria-expanded="false"
+        aria-controls="mobile-menu"
+        aria-haspopup="true">
+        <!-- Hamburger icon — toggled by JS -->
+        <svg id="menu-icon-open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+        <svg id="menu-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Navigation Menu -->
+    <div
+      id="mobile-menu"
+      class="hidden md:hidden pb-4 border-t border-gray-100 mt-1"
+      role="menu"
+      aria-labelledby="mobile-menu-button">
+      <div class="flex flex-col gap-0.5 pt-2">
+        <a href="/"
+           data-nav-link
+           class="px-4 py-3 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+           role="menuitem">
+          Home
+        </a>
+        <a href="/disease"
+           data-nav-link
+           class="px-4 py-3 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+           role="menuitem">
+          Disease Detection
+        </a>
+        <a href="/advisory"
+           data-nav-link
+           class="px-4 py-3 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+           role="menuitem">
+          Advisory Dashboard
+        </a>
+        <a href="/about"
+           data-nav-link
+           class="px-4 py-3 text-sm font-medium text-gray-700 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+           role="menuitem">
+          About
+        </a>
+
+        <!-- Mobile System Status -->
+        <div class="px-4 py-2 mt-1 border-t border-gray-100 flex items-center gap-2">
+          <div id="health-indicator-mobile"
+               class="w-2 h-2 rounded-full bg-gray-300 transition-colors duration-300"
+               role="status"
+               aria-label="System status"
+               title="System status">
+          </div>
+          <span id="health-label-mobile" class="text-xs text-gray-400">Checking status…</span>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<script>
+  (function () {
+    'use strict';
+
+    document.addEventListener('DOMContentLoaded', function () {
+      var menuButton  = document.getElementById('mobile-menu-button');
+      var mobileMenu  = document.getElementById('mobile-menu');
+      var iconOpen    = document.getElementById('menu-icon-open');
+      var iconClose   = document.getElementById('menu-icon-close');
+
+      // ── Mobile menu toggle ──────────────────────────────────────
+      if (menuButton && mobileMenu) {
+        menuButton.addEventListener('click', function () {
+          var expanded = menuButton.getAttribute('aria-expanded') === 'true';
+          menuButton.setAttribute('aria-expanded', String(!expanded));
+          mobileMenu.classList.toggle('hidden');
+          if (iconOpen)  iconOpen.classList.toggle('hidden');
+          if (iconClose) iconClose.classList.toggle('hidden');
+        });
+
+        // Close on link click
+        mobileMenu.querySelectorAll('a').forEach(function (link) {
+          link.addEventListener('click', function () {
+            mobileMenu.classList.add('hidden');
+            menuButton.setAttribute('aria-expanded', 'false');
+            if (iconOpen)  iconOpen.classList.remove('hidden');
+            if (iconClose) iconClose.classList.add('hidden');
+          });
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', function (e) {
+          if (e.key === 'Escape' && !mobileMenu.classList.contains('hidden')) {
+            mobileMenu.classList.add('hidden');
+            menuButton.setAttribute('aria-expanded', 'false');
+            if (iconOpen)  iconOpen.classList.remove('hidden');
+            if (iconClose) iconClose.classList.add('hidden');
+            menuButton.focus();
+          }
+        });
+      }
+
+      // ── Health indicator sync ───────────────────────────────────
+      function setHealth(ok) {
+        var indicators = [
+          document.getElementById('health-indicator'),
+          document.getElementById('health-indicator-mobile')
+        ];
+        var labels = [
+          document.getElementById('health-label'),
+          document.getElementById('health-label-mobile')
+        ];
+        var colorClass = ok ? 'bg-green-500' : 'bg-red-500';
+        var ariaLabel  = ok ? 'System operational' : 'System unavailable';
+        var labelText  = ok ? 'Operational' : 'Unavailable';
+
+        indicators.forEach(function (el) {
+          if (!el) return;
+          el.className = 'w-2 h-2 rounded-full transition-colors duration-300 ' + colorClass;
+          el.setAttribute('aria-label', ariaLabel);
+          el.title = ariaLabel;
+        });
+        labels.forEach(function (el) {
+          if (el) el.textContent = labelText;
+        });
+      }
+
+      if (typeof API !== 'undefined' && API.checkHealth) {
+        API.checkHealth().then(setHealth).catch(function () { setHealth(false); });
+      }
+    });
+  }());
+</script>

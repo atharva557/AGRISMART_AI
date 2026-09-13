@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}Disease Detection — AgriSmart AI{% endblock %}
+
+{% block meta_description %}Upload a crop image for AI-powered disease diagnosis. ConvNeXt-Tiny model with 99.85% validation accuracy across 38 disease classes.{% endblock %}
+
+{% block content %}
+<section class="py-10 sm:py-12 bg-gray-100">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- Page Header -->
+    <div class="max-w-3xl mx-auto text-center mb-8">
+      <p class="inline-flex items-center gap-2 px-4 py-1.5 bg-green-100 rounded-full mb-4 text-sm font-semibold text-green-700">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        AI-Powered Diagnosis
+      </p>
+      <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Crop Disease Detection</h1>
+      <p class="text-base text-gray-600 leading-relaxed">
+        Upload a clear photo of your crop for AI analysis. The ConvNeXt-Tiny model identifies diseases across 38 classes.
+      </p>
+    </div>
+
+    <div class="max-w-3xl mx-auto">
+
+      <!-- Upload Card -->
+      <div class="card mb-6">
+
+        <!-- Guidelines -->
+        <div class="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg" role="note">
+          <h2 class="text-sm font-semibold text-blue-900 mb-2">Upload Guidelines</h2>
+          <ul class="text-sm text-blue-800 space-y-1 list-none">
+            <li>Use clear, well-lit photos of affected leaves or plant parts</li>
+            <li>Supported formats: JPG, PNG (max 10 MB)</li>
+            <li>Ensure disease symptoms are clearly visible</li>
+            <li>Avoid blurry or dark images for best results</li>
+          </ul>
+        </div>
+
+        <!-- Drop Zone -->
+        <div
+          id="uploadArea"
+          class="relative border-2 border-dashed border-gray-300 rounded-xl p-8 text-center transition-colors hover:border-green-400 hover:bg-green-50/40 cursor-pointer"
+          role="button"
+          tabindex="0"
+          aria-label="Upload image — click or drag and drop a JPG or PNG file">
+
+          <input
+            type="file"
+            id="imageUpload"
+            accept="image/jpeg,image/jpg,image/png"
+            class="hidden"
+            aria-label="Choose crop image file">
+
+          <label for="imageUpload" class="flex flex-col items-center gap-3 cursor-pointer" id="uploadLabel">
+            <svg class="w-14 h-14 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <div>
+              <p class="text-base font-semibold text-gray-700 mb-1">Click to upload or drag and drop</p>
+              <p class="text-sm text-gray-500">JPG or PNG, max 10 MB</p>
+            </div>
+            <span class="btn btn-secondary text-sm pointer-events-none">Choose Image</span>
+          </label>
+
+          <!-- Image preview — populated by JavaScript -->
+          <div id="imagePreview" class="mt-4"></div>
+        </div>
+
+        <!-- Validation error -->
+        <div id="uploadError" class="mt-3" role="alert" aria-live="assertive"></div>
+
+        <!-- Action Buttons -->
+        <div class="mt-5 flex flex-col sm:flex-row gap-3">
+          <button
+            id="analyzeBtn"
+            class="btn btn-primary flex-1 hidden"
+            aria-label="Analyse selected image">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span>Analyse Image</span>
+          </button>
+          <button
+            id="clearBtn"
+            class="btn btn-secondary flex-1 hidden"
+            aria-label="Clear image selection">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            <span>Clear</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Analysis Result — populated by JavaScript -->
+      <div id="analysisResult" role="status" aria-live="polite" aria-atomic="true"></div>
+
+      <!-- Model Information -->
+      <div class="card bg-gray-50 mt-6">
+        <h2 class="text-base font-semibold text-gray-900 mb-3">About the Model</h2>
+        <dl class="space-y-1.5 text-sm text-gray-700">
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Architecture</dt><dd>ConvNeXt-Tiny (384 px)</dd></div>
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Training data</dt><dd>PlantVillage dataset — 54,305 images, 38 classes</dd></div>
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Validation accuracy</dt><dd>99.85%</dd></div>
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Macro-F1 score</dt><dd>0.9969</dd></div>
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Confidence threshold</dt><dd>75% — predictions below this are flagged</dd></div>
+        </dl>
+        <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+          <p class="text-xs text-amber-800 leading-relaxed">
+            <strong>Limitation:</strong> This model is trained on lab-quality images. Field photos with soil, background clutter, or multiple leaves may show reduced accuracy. Always verify results with local agricultural experts.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dist/disease.min.js') }}"></script>
+{% endblock %}

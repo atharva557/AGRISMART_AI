@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ error_code or 'Error' }} — AgriSmart AI{% endblock %}
+
+{% block content %}
+<section class="py-16 bg-gray-100 min-h-screen flex items-center">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-lg mx-auto text-center">
+
+      <!-- Error Icon -->
+      <div class="mb-6" aria-hidden="true">
+        {% if error_code == 404 %}
+        <svg class="w-20 h-20 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {% elif error_code == 500 %}
+        <svg class="w-20 h-20 mx-auto text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        {% else %}
+        <svg class="w-20 h-20 mx-auto text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        {% endif %}
+      </div>
+
+      <!-- Error Code -->
+      {% if error_code %}
+      <p class="text-7xl font-extrabold text-gray-200 mb-2" aria-hidden="true">{{ error_code }}</p>
+      {% endif %}
+
+      <!-- Heading -->
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 mb-3">
+        {% if error_code == 404 %}Page Not Found
+        {% elif error_code == 500 %}Internal Server Error
+        {% elif error_code == 503 %}Service Unavailable
+        {% else %}Something Went Wrong{% endif %}
+      </h1>
+
+      <!-- Message -->
+      <p class="text-base text-gray-600 mb-8 leading-relaxed">
+        {% if error_message %}{{ error_message }}
+        {% elif error_code == 404 %}The page you're looking for doesn't exist or has been moved.
+        {% elif error_code == 500 %}An unexpected error occurred. Please try again later.
+        {% elif error_code == 503 %}The service is temporarily unavailable. Please check back soon.
+        {% else %}We encountered an unexpected error. Please try again or return to the homepage.{% endif %}
+      </p>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center mb-8">
+        <a href="/" class="btn btn-primary px-8 py-3">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+          </svg>
+          Go to Homepage
+        </a>
+        <button type="button" onclick="window.history.back()" class="btn btn-secondary px-8 py-3">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+          Go Back
+        </button>
+      </div>
+
+      <!-- Helpful Links -->
+      <nav class="card max-w-sm mx-auto" aria-label="Helpful navigation links">
+        <h2 class="text-sm font-semibold text-gray-900 mb-3">Helpful Links</h2>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <a href="/" class="text-green-600 hover:text-green-700 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded">Home</a>
+          <a href="/disease" class="text-green-600 hover:text-green-700 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded">Disease Detection</a>
+          <a href="/advisory" class="text-green-600 hover:text-green-700 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded">Advisory Dashboard</a>
+          <a href="/about" class="text-green-600 hover:text-green-700 font-medium focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded">About</a>
+        </div>
+      </nav>
+
+    </div>
+  </div>
+</section>
+{% endblock %}

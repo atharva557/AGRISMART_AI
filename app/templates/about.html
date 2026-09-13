@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+
+{% block title %}About - AgriSmart AI{% endblock %}
+
+{% block meta_description %}Learn about AgriSmart AI's crop disease detection, advisory modules, data sources, limitations, and responsible use guidelines.{% endblock %}
+
+{% block content %}
+<section class="py-12 bg-gray-100">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Page Header -->
+    <div class="max-w-4xl mx-auto text-center mb-12">
+      <h1 class="text-4xl font-bold text-gray-900 mb-4">About AgriSmart AI</h1>
+      <p class="text-xl text-gray-600">
+        Smart Agricultural Diagnostics & Advisory System for precision farming
+      </p>
+    </div>
+
+    <div class="max-w-4xl mx-auto space-y-8">
+      <!-- Overview -->
+      <div class="card">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4" id="overview">Overview</h2>
+        <div class="prose prose-gray max-w-none">
+          <p class="text-gray-700 leading-relaxed mb-4">
+            AgriSmart AI is a comprehensive agricultural intelligence platform. It combines AI-powered disease detection with four precision advisory modules to help farmers and agronomists make informed decisions.
+          </p>
+          <p class="text-gray-700 leading-relaxed">
+            The system prioritizes transparency and responsible use by clearly labeling experimental results, showing confidence scores, and providing detailed limitations for each module.
+          </p>
+        </div>
+      </div>
+
+      <!-- Core Module: Disease Detection -->
+      <div class="card">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <h2 class="text-2xl font-bold text-gray-900" id="disease-detection">Disease Detection</h2>
+          <a href="/disease"
+             class="flex-shrink-0 text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus:outline-none focus:underline transition-colors"
+             aria-label="Try Disease Detection">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+        <div class="space-y-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Technology</h3>
+            <p class="text-gray-700 leading-relaxed">
+              ConvNeXt-Tiny architecture trained on the PlantVillage dataset containing 54,305 curated images across 38 crop pathology categories.
+            </p>
+          </div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-4 bg-green-50 rounded-lg">
+              <p class="text-sm text-gray-600 mb-1">Validation Accuracy</p>
+              <p class="text-2xl font-bold text-green-700">99.85%</p>
+            </div>
+            <div class="p-4 bg-green-50 rounded-lg">
+              <p class="text-sm text-gray-600 mb-1">Macro-F1 Score</p>
+              <p class="text-2xl font-bold text-green-700">0.9969</p>
+            </div>
+            <div class="p-4 bg-green-50 rounded-lg">
+              <p class="text-sm text-gray-600 mb-1">Total Classes</p>
+              <p class="text-2xl font-bold text-green-700">38</p>
+            </div>
+            <div class="p-4 bg-green-50 rounded-lg">
+              <p class="text-sm text-gray-600 mb-1">Confidence Threshold</p>
+              <p class="text-2xl font-bold text-green-700">75%</p>
+            </div>
+          </div>
+
+          <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <h4 class="text-sm font-semibold text-yellow-900 mb-2">Known Limitations</h4>
+            <ul class="text-sm text-yellow-800 space-y-1">
+              <li>• Lab-trained models may show reduced accuracy on field photos with soil, sky, or multiple leaves</li>
+              <li>• 75% confidence threshold flags many inputs but doesn't guarantee correctness above it</li>
+              <li>• External field benchmark showed 32.4% top-1 accuracy on 34 samples</li>
+              <li>• Not a substitute for professional agricultural diagnosis</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advisory Modules -->
+      <div class="card">
+        <div class="flex items-start justify-between gap-4 mb-4">
+          <h2 class="text-2xl font-bold text-gray-900" id="advisory-modules">Advisory Modules (A–D)</h2>
+          <a href="/advisory"
+             class="flex-shrink-0 text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus:outline-none focus:underline transition-colors"
+             aria-label="Open Advisory Dashboard">
+            Open dashboard
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+        
+        <!-- Module A -->
+        <div class="mb-6 pb-6 border-b border-gray-200">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-xl font-bold text-green-600" aria-hidden="true">A</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Crop Recommendation</h3>
+              <span class="text-sm text-yellow-700 font-semibold">EXPERIMENTAL</span>
+            </div>
+          </div>
+          <p class="text-gray-700 mb-3">
+            Random forest classifier ranks top three crop labels using seven soil/weather features (N, P, K, temperature, humidity, pH, rainfall).
+          </p>
+          <div class="text-sm text-gray-600 space-y-1 mb-4">
+            <p><strong>Dataset:</strong> 2,200 rows from Kaggle crop recommendation dataset</p>
+            <p><strong>Test Macro-F1:</strong> 0.9909</p>
+            <p><strong>Limitation:</strong> Dataset-scoped; units and periods unresolved; not validated for field suitability</p>
+          </div>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus:outline-none focus:underline transition-colors"
+             aria-label="Try Crop Recommendation in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Module B -->
+        <div class="mb-6 pb-6 border-b border-gray-200">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-xl font-bold text-green-600" aria-hidden="true">B</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Irrigation Advisory</h3>
+              <span class="text-sm text-blue-700 font-semibold">TRANSPARENT CALCULATION</span>
+            </div>
+          </div>
+          <p class="text-gray-700 mb-3">
+            FAO-56 style soil water balance calculation provides irrigation timing and volume recommendations based on root-zone depletion.
+          </p>
+          <div class="text-sm text-gray-600 space-y-1 mb-4">
+            <p><strong>Method:</strong> Soil water balance with allowable depletion</p>
+            <p><strong>Inputs:</strong> Soil moisture, field capacity, wilting point, crop coefficient, weather forecast</p>
+            <p><strong>Limitation:</strong> Requires calibrated soil measurements; does not actuate pumps; assumed rain effectiveness</p>
+          </div>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus:outline-none focus:underline transition-colors"
+             aria-label="Try Irrigation Advisory in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Module C -->
+        <div class="mb-6 pb-6 border-b border-gray-200">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-xl font-bold text-green-600" aria-hidden="true">C</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Weather Advisory</h3>
+              <span class="text-sm text-green-700 font-semibold">LIVE DATA</span>
+            </div>
+          </div>
+          <p class="text-gray-700 mb-3">
+            Validates Open-Meteo forecasts and applies threshold-based alerts for cold, heat, rain, wind, humidity, and moisture conditions.
+          </p>
+          <div class="text-sm text-gray-600 space-y-1 mb-4">
+            <p><strong>Data Source:</strong> Open-Meteo Forecast API</p>
+            <p><strong>Caching:</strong> 6 hours to reduce API calls</p>
+            <p><strong>Limitation:</strong> Generic thresholds; forecasts are not field observations; no crop-specific rules yet</p>
+          </div>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus:outline-none focus:underline transition-colors"
+             aria-label="Try Weather Advisory in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+
+        <!-- Module D -->
+        <div>
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span class="text-xl font-bold text-green-600" aria-hidden="true">D</span>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold text-gray-900">Sustainability Scoring</h3>
+              <span class="text-sm text-blue-700 font-semibold">TRANSPARENT FORMULA</span>
+            </div>
+          </div>
+          <p class="text-gray-700 mb-3">
+            Compares water, electricity, and nitrogen intensity between baseline and current practices with a yield retention check.
+          </p>
+          <div class="text-sm text-gray-600 space-y-1 mb-4">
+            <p><strong>Formula:</strong> Weighted component sum (water 40%, electricity 30%, nitrogen 30%)</p>
+            <p><strong>Safeguard:</strong> Score capped at 50 if yield retention falls below 95%</p>
+            <p><strong>Limitation:</strong> Comparative analysis only; does not prove software-caused savings or carbon impact</p>
+          </div>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus:outline-none focus:underline transition-colors"
+             aria-label="Try Sustainability Scoring in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Data Sources -->
+      <div class="card">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4" id="data-sources">Data Sources & Licenses</h2>
+        <div class="space-y-3">
+          <div class="p-3 bg-gray-50 rounded-lg">
+            <p class="font-semibold text-gray-900 mb-1">PlantVillage Dataset</p>
+            <p class="text-sm text-gray-600">54,305 images, 38 classes · CC0 / Public Domain</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-lg">
+            <p class="font-semibold text-gray-900 mb-1">Crop Recommendation Dataset</p>
+            <p class="text-sm text-gray-600">2,200 rows from Kaggle · Public dataset</p>
+          </div>
+          <div class="p-3 bg-gray-50 rounded-lg">
+            <p class="font-semibold text-gray-900 mb-1">Open-Meteo Forecast API</p>
+            <p class="text-sm text-gray-600">Weather forecasts · Open-source weather API</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Responsible Use -->
+      <div class="card bg-red-50 border-red-200">
+        <h2 class="text-2xl font-bold text-red-900 mb-4" id="responsible-use">Responsible Use Guidelines</h2>
+        <div class="space-y-3 text-sm text-red-800">
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <p><strong>Always consult experts:</strong> All predictions and recommendations should be verified by qualified agronomists before field implementation.</p>
+          </div>
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <p><strong>Verify confidence:</strong> Disease detection predictions below 75% confidence require expert confirmation.</p>
+          </div>
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <p><strong>Understand limitations:</strong> Module A is dataset-scoped, not field-validated. Irrigation advice requires calibrated sensors.</p>
+          </div>
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <p><strong>Local context matters:</strong> Weather thresholds and crop recommendations need local validation for your region.</p>
+          </div>
+          <div class="flex items-start gap-2">
+            <svg class="w-5 h-5 text-red-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+            <p><strong>Not for autonomous control:</strong> This system provides decision support only. Do not automate farming operations based solely on these recommendations.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Details -->
+      <div class="card">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4" id="technical">Technical Architecture</h2>
+        <div class="space-y-3 text-gray-700">
+          <p><strong>Backend:</strong> Python Flask 3.1.3</p>
+          <p><strong>ML Framework:</strong> PyTorch (disease detection), scikit-learn (crop recommendation)</p>
+          <p><strong>Frontend:</strong> HTML5, Tailwind CSS, Vanilla JavaScript</p>
+          <p><strong>API Contract:</strong> Versioned JSON envelope with evidence tracking</p>
+          <p><strong>Deployment:</strong> Stateless design, no database required</p>
+        </div>
+      </div>
+
+      <!-- Contact & Repository -->
+      <div class="card">
+        <h2 class="text-2xl font-bold text-gray-900 mb-4" id="contact">Project Information</h2>
+        <div class="space-y-3">
+          <p class="text-gray-700">
+            <strong>GitHub Repository:</strong> 
+            <a href="https://github.com/atharva557/AGRISMART_AI" target="_blank" rel="noopener noreferrer" class="text-green-600 hover:text-green-700 font-medium">
+              github.com/atharva557/AGRISMART_AI
+            </a>
+          </p>
+          <p class="text-gray-700">
+            <strong>Status:</strong> Development / Demonstration System
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

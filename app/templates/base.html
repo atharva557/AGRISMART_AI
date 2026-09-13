@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{% block meta_description %}AgriSmart AI — AI-powered crop disease detection and precision farming advisory system{% endblock %}">
+  <meta name="theme-color" content="#176a46">
+
+  <title>{% block title %}AgriSmart AI — Agricultural Diagnostics & Advisory{% endblock %}</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+
+  <!-- Compiled CSS (Tailwind + custom components) -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dist/main.min.css') }}">
+
+  {% block extra_css %}{% endblock %}
+
+  <!-- Preconnect hints for external fonts (loaded on demand only if Inter is not system font) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+  <!-- Skip to main content — keyboard / screen-reader navigation -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Header (includes navigation and system status indicator) -->
+  {% include 'components/header.html' %}
+
+  <!-- Main Content -->
+  <main id="main-content" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  {% include 'components/footer.html' %}
+
+  <!-- Core JavaScript bundle — defines window.API, window.UI, window.DOM, etc. -->
+  <script src="{{ url_for('static', filename='js/dist/main.min.js') }}"></script>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

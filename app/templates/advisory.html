@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}Advisory Dashboard — AgriSmart AI{% endblock %}
+
+{% block meta_description %}Precision farming advisory dashboard with crop recommendations, irrigation advice, weather alerts, and sustainability scoring.{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="py-10 sm:py-12 bg-gray-100 min-height-screen">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+    <!-- ── Page Header ─────────────────────────────────────────── -->
+    <header class="max-w-6xl mx-auto mb-8">
+      <div class="text-center mb-6">
+        <p class="inline-flex items-center gap-2 px-4 py-1.5 bg-green-100 rounded-full mb-4 text-sm font-semibold text-green-700 uppercase tracking-wider">
+          <span class="w-2 h-2 bg-green-600 rounded-full flex-shrink-0" aria-hidden="true"></span>
+          Advisory Modules A–D
+        </p>
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Farm Decisions with Evidence Left Visible</h1>
+        <p class="text-base text-gray-600 max-w-2xl mx-auto">
+          Run the crop, irrigation, weather, and resource-use modules from one dashboard. Experimental and simulated outputs are clearly labelled throughout.
+        </p>
+
+        <!-- Backend connection status -->
+        <div class="mt-4">
+          <div id="connection"
+               class="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm"
+               role="status"
+               aria-live="polite"
+               aria-label="Backend connection status">
+            <div class="w-2 h-2 rounded-full bg-gray-300 transition-colors duration-300" id="connection-dot" aria-hidden="true"></div>
+            <span class="text-sm text-gray-600" id="connection-text">Checking backend…</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scope notice -->
+      <div class="card border-blue-200 bg-blue-50 mb-6" role="note">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <div>
+            <p class="text-sm font-semibold text-blue-900 mb-0.5">Current Scope</p>
+            <p class="text-sm text-blue-800 leading-relaxed">
+              <strong>Working prototypes, not autonomous farm control.</strong>
+              Module A is dataset-scoped. Module B needs calibrated field measurements. Module C uses a live forecast provider. Module D compares recorded or simulated whole-cycle inputs.
+            </p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Module Grid ─────────────────────────────────────────── -->
+    <div class="max-w-6xl mx-auto">
+      <div class="module-grid">
+
+        <!-- Module A: Crop Recommendation -->
+        <section class="module-card" aria-labelledby="module-a-title">
+          <div class="module-card__heading">
+            <span class="module-letter" aria-hidden="true">A</span>
+            <div>
+              <p class="tag">Experimental ML</p>
+              <h2 id="module-a-title">Crop candidates</h2>
+            </div>
+          </div>
+          <p>Ranks three crop labels using the pinned seven-feature dataset scale. Scores are not calibrated field-suitability probabilities.</p>
+          <form id="crop-form" class="input-grid" novalidate aria-label="Crop recommendation inputs">
+            <label>N
+              <input name="N" type="number" step="any" value="90" required aria-required="true" aria-label="Nitrogen (N)">
+            </label>
+            <label>P
+              <input name="P" type="number" step="any" value="42" required aria-required="true" aria-label="Phosphorus (P)">
+            </label>
+            <label>K
+              <input name="K" type="number" step="any" value="43" required aria-required="true" aria-label="Potassium (K)">
+            </label>
+            <label>Temperature &deg;C
+              <input name="temperature" type="number" step="any" value="20.8797" required aria-required="true">
+            </label>
+            <label>Humidity %
+              <input name="humidity" type="number" step="any" value="82.0027" required aria-required="true">
+            </label>
+            <label>pH
+              <input name="ph" type="number" step="any" value="6.503" required aria-required="true">
+            </label>
+            <label>Rainfall (source value)
+              <input name="rainfall" type="number" step="any" value="202.9355" required aria-required="true">
+            </label>
+            <button type="submit">Rank crop labels</button>
+          </form>
+          <div id="crop-output" class="output" aria-live="polite" aria-atomic="true"></div>
+        </section>
+
+        <!-- Module B: Irrigation Balance -->
+        <section class="module-card" aria-labelledby="module-b-title">
+          <div class="module-card__heading">
+            <span class="module-letter" aria-hidden="true">B</span>
+            <div>
+              <p class="tag">Simulation-ready</p>
+              <h2 id="module-b-title">Irrigation balance</h2>
+            </div>
+          </div>
+          <p>Uses a transparent root-zone water balance. The defaults are an explicit simulation, not real sensor evidence.</p>
+          <form id="irrigation-form" class="input-grid" novalidate aria-label="Irrigation advisory inputs">
+            <label>Soil moisture m&sup3;/m&sup3;
+              <input name="moisture" type="number" min="0" max="1" step="0.01" value="0.20" required aria-required="true">
+            </label>
+            <label>Field capacity
+              <input name="fieldCapacity" type="number" min="0" max="1" step="0.01" value="0.30" required aria-required="true">
+            </label>
+            <label>Wilting point
+              <input name="wiltingPoint" type="number" min="0" max="1" step="0.01" value="0.14" required aria-required="true">
+            </label>
+            <label>Root depth m
+              <input name="rootDepth" type="number" min="0.01" step="0.01" value="0.30" required aria-required="true">
+            </label>
+            <label>Depletion fraction
+              <input name="depletion" type="number" min="0.01" max="1" step="0.01" value="0.40" required aria-required="true">
+            </label>
+            <label>Crop coefficient
+              <input name="cropCoefficient" type="number" min="0" step="0.01" value="0.80" required aria-required="true">
+            </label>
+            <label>Forecast ET&sub0; mm
+              <input name="et0" type="number" min="0" step="0.1" value="5" required aria-required="true">
+            </label>
+            <label>Forecast rain mm
+              <input name="rain" type="number" min="0" step="0.1" value="0" required aria-required="true">
+            </label>
+            <label>Recent effective water mm
+              <input name="recentWater" type="number" min="0" step="0.1" value="0" required aria-required="true">
+            </label>
+            <label>Application efficiency
+              <input name="efficiency" type="number" min="0.01" max="1" step="0.01" value="0.80" required aria-required="true">
+            </label>
+            <label>Target area ha
+              <input name="area" type="number" min="0.0001" step="any" value="1" required aria-required="true">
+            </label>
+            <button type="submit">Calculate advice</button>
+          </form>
+          <div id="irrigation-output" class="output" aria-live="polite" aria-atomic="true"></div>
+        </section>
+
+        <!-- Module C: Weather Intelligence -->
+        <section class="module-card" aria-labelledby="module-c-title">
+          <div class="module-card__heading">
+            <span class="module-letter" aria-hidden="true">C</span>
+            <div>
+              <p class="tag">Live forecast</p>
+              <h2 id="module-c-title">Weather intelligence</h2>
+            </div>
+          </div>
+          <p>Checks a complete 24-hour Open-Meteo window for rain, heat, cold, wind, humidity, and reference ET&sub0; conditions.</p>
+          <form id="weather-form" class="input-grid" novalidate aria-label="Weather advisory inputs">
+            <label>Latitude
+              <input name="latitude" type="number" min="-90" max="90" step="any" value="18.5204" required aria-required="true">
+            </label>
+            <label>Longitude
+              <input name="longitude" type="number" min="-180" max="180" step="any" value="73.8567" required aria-required="true">
+            </label>
+            <div class="actions">
+              <button type="submit">Check live forecast</button>
+              <button type="button" class="button--secondary" id="weather-demo">Run simulated demo</button>
+            </div>
+          </form>
+          <div id="weather-output" class="output" aria-live="polite" aria-atomic="true"></div>
+        </section>
+
+        <!-- Module D: Sustainability Comparison -->
+        <section class="module-card" aria-labelledby="module-d-title">
+          <div class="module-card__heading">
+            <span class="module-letter" aria-hidden="true">D</span>
+            <div>
+              <p class="tag">Transparent formula</p>
+              <h2 id="module-d-title">Sustainability comparison</h2>
+            </div>
+          </div>
+          <p>Compares water, electricity, and nitrogen per hectare, with a yield-retention safeguard. Defaults are simulated.</p>
+          <form id="sustainability-form" class="input-grid" novalidate aria-label="Sustainability scoring inputs">
+            <label>Baseline water m&sup3;
+              <input name="baselineWater" type="number" min="0.01" step="any" value="4000" required aria-required="true">
+            </label>
+            <label>Current water m&sup3;
+              <input name="currentWater" type="number" min="0" step="any" value="3200" required aria-required="true">
+            </label>
+            <label>Baseline electricity kWh
+              <input name="baselineElectricity" type="number" min="0.01" step="any" value="1000" required aria-required="true">
+            </label>
+            <label>Current electricity kWh
+              <input name="currentElectricity" type="number" min="0" step="any" value="850" required aria-required="true">
+            </label>
+            <label>Baseline nitrogen kg N
+              <input name="baselineNitrogen" type="number" min="0.01" step="any" value="120" required aria-required="true">
+            </label>
+            <label>Current nitrogen kg N
+              <input name="currentNitrogen" type="number" min="0" step="any" value="108" required aria-required="true">
+            </label>
+            <label>Baseline harvest kg
+              <input name="baselineHarvest" type="number" min="0.01" step="any" value="30000" required aria-required="true">
+            </label>
+            <label>Current harvest kg
+              <input name="currentHarvest" type="number" min="0" step="any" value="30000" required aria-required="true">
+            </label>
+            <button type="submit">Compare resources</button>
+          </form>
+          <div id="sustainability-output" class="output" aria-live="polite" aria-atomic="true"></div>
+        </section>
+
+      </div>
+    </div>
+
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dist/advisory.min.js') }}"></script>
+<script>
+  // Update connection status indicator using the health API
+  document.addEventListener('DOMContentLoaded', function () {
+    var dot  = document.getElementById('connection-dot');
+    var text = document.getElementById('connection-text');
+    if (typeof API !== 'undefined' && dot && text) {
+      API.checkHealth().then(function (ok) {
+        dot.className  = 'w-2 h-2 rounded-full transition-colors duration-300 ' + (ok ? 'bg-green-500' : 'bg-red-500');
+        text.textContent = ok ? 'Backend connected' : 'Backend unavailable';
+      }).catch(function () {
+        dot.className  = 'w-2 h-2 rounded-full bg-red-500';
+        text.textContent = 'Backend unavailable';
+      });
+    }
+  });
+</script>
+{% endblock %}

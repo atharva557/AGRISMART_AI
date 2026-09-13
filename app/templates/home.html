@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+
+{% block title %}AgriSmart AI — Crop Disease Detection & Precision Farming Advisory{% endblock %}
+
+{% block meta_description %}AI-powered crop disease detection and precision farming advisory. Diagnose plant diseases, get crop recommendations, irrigation advice, weather alerts, and sustainability scoring.{% endblock %}
+
+{% block content %}
+
+<!-- ── Hero ─────────────────────────────────────────────────────── -->
+<section class="relative overflow-hidden bg-green-950" style="min-height:560px;" aria-labelledby="hero-heading">
+  <!-- Background photo -->
+  <div class="absolute inset-0" aria-hidden="true">
+    <img
+      src="{{ url_for('static', filename='images/hero-field.jpg') }}"
+      alt=""
+      class="w-full h-full object-cover"
+      style="object-position:center 55%;"
+      loading="eager"
+      fetchpriority="high">
+  </div>
+
+  <!-- Gradient overlay — left strong, right fades to reveal photo -->
+  <div class="absolute inset-0" style="background:linear-gradient(to right,rgba(5,46,22,0.90) 0%,rgba(5,46,22,0.68) 45%,rgba(5,46,22,0.20) 100%);" aria-hidden="true"></div>
+  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(5,46,22,0.55) 0%,transparent 40%);" aria-hidden="true"></div>
+
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+    <div class="py-16 sm:py-20 lg:py-24">
+      <div class="max-w-2xl">
+
+        <!-- Eyebrow label — links to advisory dashboard -->
+        <a href="/advisory"
+           class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full mb-5 text-sm font-semibold text-green-100 uppercase tracking-wider transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:rounded-full"
+           style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.20);"
+           aria-label="Precision Farming Intelligence — open Advisory Dashboard">
+          <span class="w-2 h-2 bg-green-300 rounded-full flex-shrink-0" aria-hidden="true"></span>
+          Precision Farming Intelligence
+        </a>
+
+        <!-- Main heading -->
+        <h1 id="hero-heading" class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white leading-tight mb-5">
+          Smart decisions,<br class="hidden sm:block"> evidence made visible.
+        </h1>
+
+        <!-- Subheading -->
+        <p class="text-lg sm:text-xl text-green-100 leading-relaxed mb-8 max-w-xl">
+          AI-powered crop disease detection combined with precision advisory modules for irrigation, weather, crop recommendations, and sustainability scoring.
+        </p>
+
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="/disease"
+             class="inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-semibold bg-white text-green-800 hover:bg-green-50 active:bg-green-100 rounded-xl shadow-md transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+            Detect Disease
+          </a>
+          <a href="/advisory"
+             class="hero-btn-secondary inline-flex items-center justify-center gap-2 px-7 py-3.5 text-base font-semibold text-white rounded-xl transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2"
+             style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.35);">
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            Advisory Dashboard
+          </a>
+        </div>
+
+        <!-- System status — links to advisory dashboard -->
+        <a href="/advisory"
+           class="mt-7 inline-flex items-center gap-2 px-4 py-2 rounded-full transition-opacity hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:rounded-full"
+           style="background:rgba(255,255,255,0.10);"
+           aria-label="View Advisory Dashboard — system status">
+          <div id="hero-health-indicator" class="w-2 h-2 rounded-full bg-gray-300 flex-shrink-0 transition-colors duration-300" aria-hidden="true"></div>
+          <span id="hero-health-text" class="text-sm text-green-100">Checking system…</span>
+        </a>
+
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ── Features Grid ─────────────────────────────────────────────── -->
+<section class="py-16 bg-gray-100" aria-labelledby="features-heading">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+
+    <div class="text-center max-w-2xl mx-auto mb-12">
+      <p class="text-sm font-bold text-green-600 uppercase tracking-wider mb-2">Complete Toolset</p>
+      <h2 id="features-heading" class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Five Integrated Modules</h2>
+      <p class="text-lg text-gray-600">
+        From disease diagnosis to resource optimisation — a comprehensive suite of agricultural intelligence tools.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <!-- Disease Detection — implemented, dedicated route /disease -->
+      <article class="card hover:shadow-lg transition-shadow flex flex-col" aria-labelledby="feat-disease-title">
+        <div class="w-11 h-11 bg-green-100 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
+          <svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <h3 id="feat-disease-title" class="text-lg font-bold text-gray-900 mb-2">Disease Detection</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed flex-grow text-sm">
+          ConvNeXt-Tiny model trained on 38 disease classes with 99.85% validation accuracy and a 75% confidence threshold for reliable predictions.
+        </p>
+        <a href="/disease"
+           class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded transition-colors mt-auto text-sm"
+           aria-label="Try Disease Detection">
+          Try it now
+          <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </article>
+
+      <!-- Module A: Crop Recommendation — implemented on /advisory -->
+      <article class="card hover:shadow-lg transition-shadow flex flex-col" aria-labelledby="feat-crop-title">
+        <div class="w-11 h-11 bg-green-100 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
+          <span class="text-base font-bold text-green-700">A</span>
+        </div>
+        <h3 id="feat-crop-title" class="text-lg font-bold text-gray-900 mb-2">Crop Recommendation</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed flex-grow text-sm">
+          Dataset-scoped ranking of top three crop labels using soil nutrients, temperature, humidity, pH, and rainfall data.
+        </p>
+        <div class="flex items-center justify-between mt-auto">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 rounded-full text-xs font-semibold text-amber-700">Experimental</span>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded transition-colors text-sm"
+             aria-label="Try Crop Recommendation in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- Module B: Irrigation Advisory — implemented on /advisory -->
+      <article class="card hover:shadow-lg transition-shadow flex flex-col" aria-labelledby="feat-irr-title">
+        <div class="w-11 h-11 bg-green-100 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
+          <span class="text-base font-bold text-green-700">B</span>
+        </div>
+        <h3 id="feat-irr-title" class="text-lg font-bold text-gray-900 mb-2">Irrigation Advisory</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed flex-grow text-sm">
+          FAO-56 soil water balance calculation for irrigation decisions with volume estimates and timing recommendations.
+        </p>
+        <div class="flex items-center justify-between mt-auto">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-semibold text-blue-700">Transparent</span>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded transition-colors text-sm"
+             aria-label="Try Irrigation Advisory in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- Module C: Weather Advisory — implemented on /advisory, live data -->
+      <article class="card hover:shadow-lg transition-shadow flex flex-col" aria-labelledby="feat-weather-title">
+        <div class="w-11 h-11 bg-green-100 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
+          <span class="text-base font-bold text-green-700">C</span>
+        </div>
+        <h3 id="feat-weather-title" class="text-lg font-bold text-gray-900 mb-2">Weather Advisory</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed flex-grow text-sm">
+          Live Open-Meteo forecasts with rule-based alerts for cold, heat, rain, wind, humidity, and moisture conditions.
+        </p>
+        <div class="flex items-center justify-between mt-auto">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 rounded-full text-xs font-semibold text-green-700">Live data</span>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded transition-colors text-sm"
+             aria-label="Try Weather Advisory in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- Module D: Sustainability Scoring — implemented on /advisory -->
+      <article class="card hover:shadow-lg transition-shadow flex flex-col" aria-labelledby="feat-sust-title">
+        <div class="w-11 h-11 bg-green-100 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
+          <span class="text-base font-bold text-green-700">D</span>
+        </div>
+        <h3 id="feat-sust-title" class="text-lg font-bold text-gray-900 mb-2">Sustainability Scoring</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed flex-grow text-sm">
+          Compare water, electricity, and nitrogen use with yield retention checks for resource optimisation insights.
+        </p>
+        <div class="flex items-center justify-between mt-auto">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-200 rounded-full text-xs font-semibold text-blue-700">Transparent</span>
+          <a href="/advisory"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded transition-colors text-sm"
+             aria-label="Try Sustainability Scoring in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- Module E: Multilingual Assistant — NOT implemented -->
+      <article class="card opacity-60 flex flex-col" aria-labelledby="feat-assist-title" aria-disabled="true">
+        <div class="w-11 h-11 bg-gray-200 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
+          <span class="text-base font-bold text-gray-500">E</span>
+        </div>
+        <h3 id="feat-assist-title" class="text-lg font-bold text-gray-700 mb-2">Multilingual Assistant</h3>
+        <p class="text-gray-500 mb-4 leading-relaxed flex-grow text-sm">
+          Farmer-friendly explanations and guidance in multiple languages for broader accessibility.
+        </p>
+        <div class="mt-auto">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-xs font-semibold text-gray-500">Coming soon</span>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ── How It Works ──────────────────────────────────────────────── -->
+<section class="py-16 bg-white" aria-labelledby="how-heading">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto text-center mb-12">
+      <p class="text-sm font-bold text-green-600 uppercase tracking-wider mb-2">Process</p>
+      <h2 id="how-heading" class="text-3xl sm:text-4xl font-bold text-gray-900">How AgriSmart AI Works</h2>
+    </div>
+
+    <ol class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto list-none" aria-label="Three-step process">
+      <li class="text-center">
+        <div class="w-14 h-14 bg-green-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4" aria-hidden="true">1</div>
+        <h3 class="text-base font-bold text-gray-900 mb-2">Input Your Data</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">Upload crop images for disease detection or enter soil, weather, and field parameters for the advisory modules.</p>
+      </li>
+      <li class="text-center">
+        <div class="w-14 h-14 bg-green-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4" aria-hidden="true">2</div>
+        <h3 class="text-base font-bold text-gray-900 mb-2">AI Analysis</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">Models process your inputs using trained algorithms, validated datasets, and real-time data sources.</p>
+      </li>
+      <li class="text-center">
+        <div class="w-14 h-14 bg-green-600 text-white rounded-full flex items-center justify-center text-xl font-bold mx-auto mb-4" aria-hidden="true">3</div>
+        <h3 class="text-base font-bold text-gray-900 mb-2">Actionable Insights</h3>
+        <p class="text-sm text-gray-600 leading-relaxed">Receive clear recommendations with confidence scores, limitations, and supporting evidence for informed decisions.</p>
+      </li>
+    </ol>
+  </div>
+</section>
+
+
+<!-- ── CTA Banner ────────────────────────────────────────────────── -->
+<section class="py-14 bg-green-700" aria-labelledby="cta-heading">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="max-w-2xl mx-auto text-center text-white">
+      <h2 id="cta-heading" class="text-3xl sm:text-4xl font-bold mb-3 text-white">Ready to get started?</h2>
+      <p class="text-base text-green-100 mb-8">Start with disease detection or explore the advisory dashboard.</p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <a href="/disease"
+           class="inline-flex items-center justify-center px-7 py-3.5 text-base font-semibold bg-white text-green-700 hover:bg-green-50 active:bg-green-100 rounded-xl shadow transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
+          Upload Crop Image
+        </a>
+        <a href="/advisory"
+           class="inline-flex items-center justify-center px-7 py-3.5 text-base font-semibold text-white bg-green-800 hover:bg-green-900 active:bg-green-950 rounded-xl transition-colors duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-white focus-visible:outline-offset-2">
+          Open Advisory Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dist/home.min.js') }}"></script>
+{% endblock %}
