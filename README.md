@@ -137,13 +137,17 @@ Access the application in your browser at: **`http://127.0.0.1:5000`**
 
 ## 6. Model Benchmarks (Plant Pathology Classifier)
 
-Evaluated across **10,861 held-out test samples** (PlantVillage 80/20 train-val split):
+Historical reported results on **10,861 validation samples** (PlantVillage 80/20 train-val split). These scores have not been independently revalidated for the current FP16-compressed checkpoints and do not establish field-photo accuracy:
 
 | Model Architecture | Input Resolution | Macro-F1 | Top-1 Accuracy | Avg GPU Latency | Checkpoint Location |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **ConvNeXt-Tiny (Champion)** | **384 × 384** | **0.9969** | **99.85%** | **24.5 ms** | `model/weights/cv/model_v3.pkl` |
-| **ResNet-50 (Enhanced)** | 224 × 224 | 0.9946 | 99.67% | 5.4 ms | `model/weights/cv/model_v2.pkl` |
-| **ResNet-18 (Baseline)** | 224 × 224 | 0.9912 | 99.43% | 7.6 ms | `model/weights/cv/model_v1.pkl` |
+| **ConvNeXt-Tiny (Champion)** | **384 × 384** | **0.9969** | **99.85%** | **24.5 ms** | `model/weights/cv/model_v3.pkl.gz` |
+| **ResNet-50 (Enhanced)** | 224 × 224 | 0.9946 | 99.67% | 5.4 ms | `model/weights/cv/model_v2.pkl.gz` |
+| **ResNet-18 (Baseline)** | 224 × 224 | 0.9912 | 99.43% | 7.6 ms | `model/weights/cv/model_v1.pkl.gz` |
+
+The first prediction lazily loads the model; subsequent predictions reuse it. Concurrent first-time loads are serialized. This cache is per server process, with ResNet-18 as a fallback if ConvNeXt cannot load. Git LFS is no longer required for the compressed checkpoints.
+
+See [inference reliability fixes and verification](docs/INFERENCE_HARDENING.md) for upload errors, cache lifecycle, test commands, and remaining limitations.
 
 ---
 
@@ -251,4 +255,3 @@ A structured overview of all research notebooks, evaluation scripts, and enginee
 - **Datasets:** PlantVillage (CC0 / Public Domain), PlantDoc (MIT Open Research).
 - **Weather Provider:** Open-Meteo API (Open Database License).
 - **License:** MIT License. Built for Smart India Hackathon (SIH 2026).
-

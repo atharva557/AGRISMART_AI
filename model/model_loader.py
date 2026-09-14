@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import pickle
+from threading import RLock
 from pathlib import Path
 from typing import Dict, Any, Tuple, Optional
 
@@ -30,6 +31,7 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 _CACHED_MODEL = None
 _CACHED_BUNDLE: Optional[Dict[str, Any]] = None
 _ACTIVE_VERSION: Optional[str] = None
+_MODEL_LOCK = RLock()
 
 
 class CPU_Unpickler(pickle.Unpickler):
@@ -107,6 +109,12 @@ def _load_model_from_bundle(pkl_path: Path) -> Tuple[nn.Module, Dict[str, Any]]:
 
 
 def get_model(force_reload: bool = False) -> Tuple[nn.Module, Dict[str, Any], str]:
+    """Reuse one model per process and serialize concurrent initial loads."""
+    with _MODEL_LOCK:
+        return _get_model_locked(force_reload)
+
+
+def _get_model_locked(force_reload: bool = False) -> Tuple[nn.Module, Dict[str, Any], str]:
     """
     Get the cached neural network model and metadata bundle.
     Tries primary v3 (ConvNeXt-Tiny) first, then falls back to v1 (ResNet-18).

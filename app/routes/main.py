@@ -37,7 +37,9 @@ def about():
 @bp.get("/api/health")
 def health():
     """Health check endpoint. Reports application availability and ML model status."""
-    from model.model_loader import PRIMARY_CHECKPOINT, FALLBACK_CHECKPOINT
+    from config import BASE_DIR
+    PRIMARY_CHECKPOINT = BASE_DIR / "model" / "weights" / "cv" / "model_v3.pkl"
+    FALLBACK_CHECKPOINT = BASE_DIR / "model" / "weights" / "cv" / "model_v1.pkl"
     cv_ready = (
         PRIMARY_CHECKPOINT.is_file()
         or PRIMARY_CHECKPOINT.with_name("model_v3.pkl.gz").is_file()

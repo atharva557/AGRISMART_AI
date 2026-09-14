@@ -9,6 +9,7 @@
     "build:css": "tailwindcss -i ./app/static/css/src/main.css -o ./app/static/css/dist/main.min.css --minify",
     "build:css:dev": "tailwindcss -i ./app/static/css/src/main.css -o ./app/static/css/dist/main.min.css --watch",
     "build:all": "npm run build:css && npm run build",
+    "test:frontend": "node --test tests/frontend/*.test.mjs",
     "clean": "rimraf app/static/css/dist app/static/js/dist"
   },
   "keywords": [

@@ -519,14 +519,9 @@ function initAssistantSection(result) {
   try {
     contextPayload = buildDiseaseAssistantPayload(result);
   } catch (error) {
-    contextPayload = {
-      disease_label: result.raw_label || result.label || result.disease,
-      confidence: result.confidence,
-      crop: result.crop,
-      severity: result.severity,
-      symptoms: result.symptoms,
-      precautions: result.recommendations,
-    };
+    if (explanationEl) explanationEl.textContent = error.message;
+    if (sendBtn) sendBtn.disabled = true;
+    return;
   }
 
   async function loadExplanation() {
@@ -615,6 +610,7 @@ function initAssistantSection(result) {
       appendChatMessage('assistant', 'Sorry, I could not complete the request. Please verify your connection.');
       console.error('Chat error:', err);
     } finally {
+      loadingDiv.remove();
       if (sendBtn) {
         LeafLoader.setButtonLoading(sendBtn, false);
         sendBtn.disabled = false;

@@ -12,7 +12,7 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 
-def test_routes():
+def check_routes():
     """Test that all routes return 200 status"""
     app = create_app()
     client = app.test_client()
@@ -76,7 +76,7 @@ def test_routes():
         print("="*60 + "\n")
         return 1
 
-def test_static_files():
+def check_static_files():
     """Test that critical static files exist"""
     import os
     from pathlib import Path
@@ -119,7 +119,7 @@ def test_static_files():
         print("="*60 + "\n")
         return 1
 
-def test_templates():
+def check_templates():
     """Test that all required templates exist"""
     from pathlib import Path
     
@@ -166,13 +166,25 @@ def test_templates():
         print("="*60 + "\n")
         return 1
 
+def test_routes():
+    assert check_routes() == 0, 'One or more frontend routes failed'
+
+
+def test_static_files():
+    assert check_static_files() == 0, 'Required assets are missing; run npm run build:all'
+
+
+def test_templates():
+    assert check_templates() == 0, 'Required templates are missing'
+
+
 if __name__ == '__main__':
     exit_code = 0
     
     # Run all tests
-    exit_code |= test_templates()
-    exit_code |= test_static_files()
-    exit_code |= test_routes()
+    exit_code |= check_templates()
+    exit_code |= check_static_files()
+    exit_code |= check_routes()
     
     if exit_code == 0:
         print("\n\033[92m" + "="*60)

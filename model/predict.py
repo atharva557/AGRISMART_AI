@@ -39,11 +39,19 @@ def predict_detailed(image_input: Union[str, Path, Image.Image], top_k: int = 3)
         img_path = Path(image_input)
         if not img_path.is_file():
             raise FileNotFoundError(f"Image not found: {img_path}")
-        image = Image.open(img_path).convert("RGB")
+        with Image.open(img_path) as source:
+            if source.width * source.height > 50_000_000:
+                raise ValueError("Image exceeds the 50 megapixel limit")
+            image = source.convert("RGB")
     elif isinstance(image_input, Image.Image):
+        if image_input.width * image_input.height > 50_000_000:
+            raise ValueError("Image exceeds the 50 megapixel limit")
         image = image_input.convert("RGB")
     else:
         raise ValueError("image_input must be a filepath string, Path, or PIL.Image instance")
+
+    if not isinstance(top_k, int) or isinstance(top_k, bool) or top_k < 1:
+        raise ValueError("top_k must be a positive integer")
 
     # Retrieve cached model and bundle
     model, bundle, version = get_model()
@@ -114,10 +122,10 @@ def main():
 
     try:
         diagnostics = predict_detailed(args.image, top_k=args.top_k)
-        print(f"\n🌾 Predicted Class: {diagnostics['label']}")
-        print(f"📊 Confidence:      {diagnostics['confidence_percentage']} (Threshold: {diagnostics['confidence_threshold'] * 100:.0f}%)")
-        print(f"⏱️  Latency:         {diagnostics['latency_ms']} ms ({diagnostics['device']})")
-        print(f"🤖 Model:           {diagnostics['model_version']}")
+        print(f"\nPredicted Class: {diagnostics['label']}")
+        print(f"Confidence:      {diagnostics['confidence_percentage']} (Threshold: {diagnostics['confidence_threshold'] * 100:.0f}%)")
+        print(f"Latency:         {diagnostics['latency_ms']} ms ({diagnostics['device']})")
+        print(f"Model:           {diagnostics['model_version']}")
         print("\nTop Candidates:")
         for i, c in enumerate(diagnostics['top_candidates'], 1):
             print(f"  {i}. {c['label']}: {c['percentage']}")

@@ -1,13 +1,20 @@
 # Tests
 
-Run from the repository root: `python -m unittest discover -s tests -v`.
+Run from the repository root with the project virtual environment active:
 
-These checks verify the Flask shell, A-D request/response behavior, saved A-model inference when its local artifact is present, B/D calculations, and C forecast rules using deterministic provider data. They do not execute notebooks, train models, or independently reproduce saved benchmark metrics. Replace the core inference placeholder check when the disease model is connected.
+```powershell
+python -m pytest -q tests
+npm run test:frontend
+```
 
-The current suite has 12 tests. It loads named request fixtures from `docs/examples/bonus_contract_examples.json`; the A exact-row test requires both the packaged model and the pinned original CSV at `data/crop_recommendation/raw/Crop_recommendation.csv`. With no CSV, that request correctly returns `DATA_UNAVAILABLE` rather than an experimental result. The separate A model-scale fixture omits `row_id` and can run without raw data. The model-dependent test is skipped only when the model artifact itself is missing.
+Install Python requirements and frontend dependencies, then run `npm run build:all` first. The CV checkpoints are now tracked as `model/weights/cv/model_v*.pkl.gz`; Git LFS is not required for this version.
 
-Before running the full suite, obtain the pinned CSV as described in [data/README.md](../data/README.md). When the model is present but the CSV is absent, the exact-row test assertion fails; that fixture prerequisite does not prevent the dashboard's no-CSV A demonstration from working. No training is required to install the original source CSV.
+The checks cover pages/assets, A–D contracts, saved-model inference, the disease API-to-assistant connection, image validation/cleanup, concurrent cache initialization, forced reload, and fallback. The cache is per Python process, not shared between server workers. Gemini responses and regional translation fallback are mocked for offline tests; no live service verification is implied.
 
-C's tests inject complete provider-shaped data or use the explicit simulated demo, so they do not depend on live network availability. JSON `negative_acceptance_cases` describe current outcomes; `planned_acceptance_cases` are a roadmap, not additional passing tests. The suite does not cover all proposed field-safety checks, authenticate calibration/evidence records, or validate production performance.
+A's no-row model-scale test requires its saved artifact but not the raw CSV. Requests with `row_id` still require the exact pinned source CSV. C uses deterministic provider-shaped data or its explicit demo.
 
-For a real prediction smoke test, place a properly sourced image from your permitted data at `tests/sample_leaf.jpg` locally. It is ignored by Git. No fake JPEG or copied dataset image is bundled.
+Tests do not train models, execute notebooks, authenticate field evidence, or prove real-world accuracy. The stored historical benchmark scores have not been independently reproduced for the newly FP16-compressed checkpoints. Sample inference explicitly skips if its permitted sample image is absent.
+
+Standalone frontend check: `python tests/test_frontend.py`.
+
+See [inference reliability verification](../docs/INFERENCE_HARDENING.md) for the recorded results and operational limitations.
