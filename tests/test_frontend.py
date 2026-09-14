@@ -4,6 +4,12 @@ Verify all routes and pages are working correctly
 """
 
 import sys
+from pathlib import Path
+
+# Add project root to sys.path
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
 from app import create_app
 
 def test_routes():
@@ -79,7 +85,7 @@ def test_static_files():
     print("STATIC FILES CHECK")
     print("="*60 + "\n")
     
-    base_path = Path(__file__).parent / 'app' / 'static'
+    base_path = ROOT / 'app' / 'static'
     
     files = [
         'css/base.css',
@@ -127,7 +133,7 @@ def test_templates():
     print("TEMPLATES CHECK")
     print("="*60 + "\n")
     
-    base_path = Path(__file__).parent / 'app' / 'templates'
+    base_path = ROOT / 'app' / 'templates'
     
     templates = [
         'base.html',
