@@ -1,5 +1,6 @@
 """Page and API integration checks."""
 import unittest
+from unittest.mock import patch
 
 from app import create_app
 
@@ -9,7 +10,12 @@ class AppTests(unittest.TestCase):
         self.client = create_app({"TESTING": True}).test_client()
 
     def test_pages_and_assets_load(self):
-        for path in ("/", "/disease", "/advisory", "/about"):
+        for path in (
+            "/", "/disease", "/advisory", "/about",
+            "/static/css/dist/main.min.css", "/static/js/dist/main.min.js",
+            "/static/js/dist/home.min.js", "/static/js/dist/disease.min.js",
+            "/static/js/dist/advisory.min.js",
+        ):
             with self.subTest(path=path):
                 response = self.client.get(path)
                 try:
@@ -21,6 +27,20 @@ class AppTests(unittest.TestCase):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json["status"], "ok")
+
+    def test_disease_assistant_looks_up_the_official_label(self):
+        with patch("app.routes.assistant.assistant.explain", return_value="Grounded explanation"):
+            response = self.client.post("/api/assistant/explain", json={
+                "disease_label": "Tomato___Early_blight",
+                "confidence": 0.91,
+                "crop": "Tomato",
+                "lang": "en",
+            })
+        self.assertEqual(response.status_code, 200)
+        core = response.json["context"]["core_detection"]
+        self.assertEqual(core["predicted_class"], "Tomato___Early_blight")
+        self.assertNotEqual(core["severity"], "unknown")
+        self.assertTrue(core["symptoms"])
 
     def test_implemented_api_validations(self):
         # Disease predict without image returns 422
@@ -41,4 +61,3 @@ class AppTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

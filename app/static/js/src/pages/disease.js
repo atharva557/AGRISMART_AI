@@ -6,6 +6,7 @@ import API from '../core/api.js';
 import UI from '../components/ui.js';
 import DOM from '../utils/dom.js';
 import { Format } from '../utils/format.js';
+import { buildDiseaseAssistantPayload } from '../utils/assistant-context.mjs';
 
 // State
 let selectedFile = null;
@@ -490,16 +491,17 @@ function initAssistantSection(result) {
   let currentLang = langSelect ? langSelect.value : 'en';
   const sessionId = 'session-' + Math.random().toString(36).slice(2);
   let assistantContext = null;
+  let explanationRequest = null;
 
-  // Build context payload
-  const contextPayload = {
-    disease_label: result.class_name || result.disease,
-    confidence: result.confidence,
-    crop: result.crop,
-    severity: result.severity,
-    symptoms: result.symptoms,
-    precautions: result.recommendations,
-  };
+  // The readable disease name cannot identify a crop-specific KB entry.
+  let contextPayload;
+  try {
+    contextPayload = buildDiseaseAssistantPayload(result);
+  } catch (error) {
+    if (explanationEl) explanationEl.textContent = error.message;
+    if (sendBtn) sendBtn.disabled = true;
+    return;
+  }
 
   async function loadExplanation() {
     if (!explanationEl) return;
@@ -507,16 +509,18 @@ function initAssistantSection(result) {
     
     try {
       const response = await API.explainAssistant({ ...contextPayload, lang: currentLang });
-      if (response && response.explanation) {
+      if (response && response.explanation && response.context) {
         explanationEl.innerHTML = DOM.escapeHtml(response.explanation).replace(/\n/g, '<br>');
         assistantContext = response.context;
+        return assistantContext;
       } else {
-        explanationEl.textContent = 'Guidance is available. Ask any questions below.';
+        explanationEl.textContent = 'Grounded guidance could not be loaded. Please try again.';
       }
     } catch (err) {
       console.warn('Assistant explanation fetch failed:', err);
-      explanationEl.textContent = 'Guidance is ready. You can ask follow-up questions below.';
+      explanationEl.textContent = 'Grounded guidance could not be loaded. Please check your connection.';
     }
+    return null;
   }
 
   function appendChatMessage(role, text) {
@@ -549,10 +553,16 @@ function initAssistantSection(result) {
     if (sendBtn) sendBtn.disabled = true;
 
     try {
+      // A fast click must not send a fabricated substitute for the server context.
+      const context = assistantContext || await explanationRequest;
+      if (!context) {
+        appendChatMessage('assistant', 'The diagnosis context is not available yet. Please reload the explanation before asking a question.');
+        return;
+      }
       const response = await API.chatAssistant({
         session_id: sessionId,
         message: message,
-        context: assistantContext || { core_detection: contextPayload },
+        context,
         lang: currentLang,
       });
 
@@ -568,6 +578,7 @@ function initAssistantSection(result) {
       appendChatMessage('assistant', 'Sorry, I could not complete the request. Please verify your connection.');
       console.error('Chat error:', err);
     } finally {
+      loadingDiv.remove();
       if (sendBtn) sendBtn.disabled = false;
     }
   }
@@ -576,7 +587,7 @@ function initAssistantSection(result) {
   if (langSelect) {
     langSelect.addEventListener('change', (e) => {
       currentLang = e.target.value;
-      loadExplanation();
+      explanationRequest = loadExplanation();
     });
   }
 
@@ -602,7 +613,7 @@ function initAssistantSection(result) {
   }
 
   // Initial explanation load
-  loadExplanation();
+  explanationRequest = loadExplanation();
 }
 
 /**
@@ -629,4 +640,3 @@ function handleClear() {
 }
 
 export { handleAnalyze, handleClear };
-

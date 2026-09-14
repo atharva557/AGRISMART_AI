@@ -1,5 +1,6 @@
 """Tests for Farmer Assistant (Bonus E) — Runs offline with deterministic fallback."""
 import unittest
+from unittest.mock import patch
 
 from services.disease_info import DISEASE_KB, get_disease_info
 from services.farmer_assistant import FarmerAssistant
@@ -59,6 +60,7 @@ class FarmerAssistantTests(unittest.TestCase):
         self.assistant.reset_session("s1")
         self.assertNotIn("s1", self.assistant._sessions)
 
+    @patch('utils.translation_utils._BACKEND_AVAILABLE', False)
     def test_translation_falls_back_gracefully_when_offline(self):
         text = translate_text("Delay irrigation", target_lang="hi")
         self.assertTrue(isinstance(text, str) and len(text) > 0)
@@ -70,4 +72,3 @@ class FarmerAssistantTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

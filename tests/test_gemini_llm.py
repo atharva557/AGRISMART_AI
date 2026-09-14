@@ -1,6 +1,6 @@
 """Tests for Gemini LLM Integration — Mocks genai.Client for offline CI testing."""
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from services.farmer_assistant import FarmerAssistant
 
@@ -68,6 +68,7 @@ class GeminiLLMTests(unittest.TestCase):
         result = self.assistant.chat("Should I water today?", self.sample_context, session_id="s3", lang="en")
         self.assertIn("delay irrigation", result.lower())
 
+    @patch('services.farmer_assistant.GEMINI_API_KEY', None)
     def test_no_api_key_never_touches_gemini(self):
         assistant = FarmerAssistant(api_key=None)
         self.assertIsNone(assistant._client)
@@ -77,4 +78,3 @@ class GeminiLLMTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
