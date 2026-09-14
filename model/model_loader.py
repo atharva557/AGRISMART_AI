@@ -1,4 +1,5 @@
 """Model loading and caching manager for AgriSmart AI."""
+import gzip
 import io
 import json
 import logging
@@ -22,8 +23,6 @@ PRIMARY_CHECKPOINT = BASE_DIR / "model" / "weights" / "cv" / "model_v3.pkl"
 FALLBACK_CHECKPOINT = BASE_DIR / "model" / "weights" / "cv" / "model_v1.pkl"
 ALT_PRIMARY = BASE_DIR / "model" / "weights" / "model_v3.pkl"
 ALT_FALLBACK = BASE_DIR / "model" / "weights" / "model_v1.pkl"
-LEGACY_PRIMARY = BASE_DIR / "notebooks" / "cv_model_notebooks" / "model_v3.pkl"
-LEGACY_FALLBACK = BASE_DIR / "notebooks" / "cv_model_notebooks" / "model_v1.pkl"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -53,9 +52,20 @@ def load_classes(path=CLASSES_PATH):
     return classes
 
 
+def _find_checkpoint(base_path: Path) -> Optional[Path]:
+    """Find a checkpoint trying compressed .pkl.gz first, then standard .pkl."""
+    gz_path = base_path.with_name(f"{base_path.name}.gz") if not str(base_path).endswith(".gz") else base_path
+    if gz_path.exists():
+        return gz_path
+    if base_path.exists():
+        return base_path
+    return None
+
+
 def _load_model_from_bundle(pkl_path: Path) -> Tuple[nn.Module, Dict[str, Any]]:
-    """Instantiate the PyTorch architecture and load state dict from bundle."""
-    with open(pkl_path, "rb") as f:
+    """Instantiate the PyTorch architecture and load state dict from (possibly compressed) bundle."""
+    open_fn = gzip.open if str(pkl_path).endswith(".gz") else open
+    with open_fn(pkl_path, "rb") as f:
         if torch.cuda.is_available():
             try:
                 bundle = pickle.load(f)
@@ -83,7 +93,14 @@ def _load_model_from_bundle(pkl_path: Path) -> Tuple[nn.Module, Dict[str, Any]]:
     else:
         raise ValueError(f"Unsupported model architecture in checkpoint: {arch}")
 
-    model.load_state_dict(bundle["state_dict"])
+    # Handle float16 weights by casting to model's default parameter dtype
+    state_dict = bundle["state_dict"]
+    target_dtype = next(model.parameters()).dtype
+    converted_state_dict = {
+        k: v.to(dtype=target_dtype) if isinstance(v, torch.Tensor) and v.is_floating_point() else v
+        for k, v in state_dict.items()
+    }
+    model.load_state_dict(converted_state_dict)
     model = model.to(DEVICE)
     model.eval()
     return model, bundle
@@ -93,6 +110,7 @@ def get_model(force_reload: bool = False) -> Tuple[nn.Module, Dict[str, Any], st
     """
     Get the cached neural network model and metadata bundle.
     Tries primary v3 (ConvNeXt-Tiny) first, then falls back to v1 (ResNet-18).
+    Supports transparent on-the-fly decompression of .pkl.gz archives.
     """
     global _CACHED_MODEL, _CACHED_BUNDLE, _ACTIVE_VERSION
 
@@ -100,8 +118,8 @@ def get_model(force_reload: bool = False) -> Tuple[nn.Module, Dict[str, Any], st
         return _CACHED_MODEL, _CACHED_BUNDLE, _ACTIVE_VERSION
 
     # Try Primary Checkpoint (v3)
-    target_v3 = PRIMARY_CHECKPOINT if PRIMARY_CHECKPOINT.exists() else ALT_PRIMARY
-    if target_v3.exists():
+    target_v3 = _find_checkpoint(PRIMARY_CHECKPOINT) or _find_checkpoint(ALT_PRIMARY)
+    if target_v3:
         try:
             logger.info(f"Loading primary model (v3 ConvNeXt-Tiny) from {target_v3}")
             model, bundle = _load_model_from_bundle(target_v3)
@@ -113,8 +131,8 @@ def get_model(force_reload: bool = False) -> Tuple[nn.Module, Dict[str, Any], st
             logger.warning(f"Failed loading primary model v3: {e}. Attempting fallback...")
 
     # Try Fallback Checkpoint (v1)
-    target_v1 = FALLBACK_CHECKPOINT if FALLBACK_CHECKPOINT.exists() else ALT_FALLBACK
-    if target_v1.exists():
+    target_v1 = _find_checkpoint(FALLBACK_CHECKPOINT) or _find_checkpoint(ALT_FALLBACK)
+    if target_v1:
         try:
             logger.info(f"Loading fallback model (v1 ResNet-18) from {target_v1}")
             model, bundle = _load_model_from_bundle(target_v1)

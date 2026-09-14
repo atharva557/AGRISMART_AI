@@ -30,10 +30,14 @@ data/*
 uploads/*
 model/weights/*
 !model/weights/cv/
-!model/weights/cv/*.pkl
+!model/weights/cv/*.pkl.gz
 !model/weights/crop_recommendation/
 !model/weights/crop_recommendation/crop_recommendation.joblib
 tests/sample_leaf.jpg
+
+# Test images
+notebooks/evaluation_benchmarks/test_images/
+notebooks/evaluation_benchmarks/test_images_external_datasets/
 
 # Generated outputs
 outputs/figures/*
@@ -66,3 +70,5 @@ app/static/js/dist/
 
 # Temporary files
 temp_homepage.html
+
+

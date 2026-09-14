@@ -36,5 +36,23 @@ def about():
 
 @bp.get("/api/health")
 def health():
-    """Health check endpoint"""
-    return {"status": "ok", "service": "agrismart"}
+    """Health check endpoint. Reports application availability and ML model status."""
+    from model.model_loader import PRIMARY_CHECKPOINT, FALLBACK_CHECKPOINT
+    cv_ready = (
+        PRIMARY_CHECKPOINT.is_file()
+        or PRIMARY_CHECKPOINT.with_name("model_v3.pkl.gz").is_file()
+        or FALLBACK_CHECKPOINT.is_file()
+        or FALLBACK_CHECKPOINT.with_name("model_v1.pkl.gz").is_file()
+    )
+
+    from services.crop_recommendation import MODEL_PATH as CROP_MODEL_PATH
+    crop_ready = CROP_MODEL_PATH.is_file()
+
+    return {
+        "status": "ok",
+        "service": "agrismart",
+        "models": {
+            "cv_checkpoint_present": cv_ready,
+            "crop_model_present": crop_ready,
+        },
+    }
