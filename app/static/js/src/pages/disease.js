@@ -6,10 +6,13 @@ import API from '../core/api.js';
 import UI from '../components/ui.js';
 import DOM from '../utils/dom.js';
 import LeafLoader from '../components/loader.js';
+import Format from '../utils/format.js';
 import { buildDiseaseAssistantPayload } from '../utils/assistant-context.mjs';
+import { weatherContext, scanLocation } from '../utils/diagnosis-flow.mjs';
 
 // State
 let selectedFile = null;
+let scanGeneration = 0;
 
 // Initialize disease detection page
 document.addEventListener('DOMContentLoaded', () => {
@@ -17,7 +20,32 @@ document.addEventListener('DOMContentLoaded', () => {
   
   initFileUpload();
   initAnalyzeButton();
+  initScanOptions();
 });
+
+async function initScanOptions() {
+  const select = DOM.byId('scanCrop');
+  const classes = await API.get('/api/disease/classes');
+  for (const crop of classes.crops || []) {
+    const option = document.createElement('option');
+    option.value = crop;
+    option.textContent = crop.replaceAll('_', ' ');
+    select?.appendChild(option);
+  }
+  DOM.byId('scanWeatherMode')?.addEventListener('change', (event) => {
+    DOM.byId('scanCoordinates').hidden = event.target.value !== 'live';
+  });
+  DOM.byId('useScanLocation')?.addEventListener('click', () => {
+    const status = DOM.byId('locationStatus');
+    if (!navigator.geolocation) { status.textContent = 'Location is unavailable. Enter coordinates manually.'; return; }
+    status.textContent = 'Getting your location…';
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      DOM.byId('scanLatitude').value = coords.latitude.toFixed(5);
+      DOM.byId('scanLongitude').value = coords.longitude.toFixed(5);
+      status.textContent = 'Location ready. Check that this is your farm location.';
+    }, () => { status.textContent = 'Location was unavailable. Enter coordinates manually or continue without weather.'; }, { timeout: 10000 });
+  });
+}
 
 /**
  * Initialize file upload functionality
@@ -31,6 +59,12 @@ function initFileUpload() {
   
   // File input change
   uploadInput.addEventListener('change', handleFileSelect);
+  uploadArea.addEventListener('keydown', (event) => {
+    if (event.target === uploadArea && ['Enter', ' '].includes(event.key)) {
+      event.preventDefault();
+      uploadInput.click();
+    }
+  });
   
   // Drag and drop
   uploadArea.addEventListener('dragover', (e) => {
@@ -62,6 +96,7 @@ function initFileUpload() {
 function handleFileSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
+  handleClear();
   
   // Validate file
   const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
@@ -166,6 +201,16 @@ async function handleAnalyze() {
   const analyzeBtn = DOM.byId('analyzeBtn');
   
   if (!resultContainer) return;
+  const generation = ++scanGeneration;
+  const crop = DOM.byId('scanCrop')?.value || '';
+  const weatherMode = DOM.byId('scanWeatherMode')?.value || 'none';
+  let location;
+  try {
+    location = scanLocation(weatherMode, DOM.byId('scanLatitude')?.value, DOM.byId('scanLongitude')?.value);
+  } catch (error) {
+    UI.showError(resultContainer, error.message, 'Check location');
+    return;
+  }
   
   // Clear previous results
   resultContainer.innerHTML = '';
@@ -181,25 +226,55 @@ async function handleAnalyze() {
   try {
     const response = await API.predictDisease(selectedFile, (progress) => {
       console.log(`Upload progress: ${progress.toFixed(0)}%`);
-    });
+    }, crop);
+    if (generation !== scanGeneration) return;
     
     // Hide loader
     LeafLoader.hide(resultContainer);
     
-    if (API.isSuccess(response)) {
+    if (response.status === 'RETAKE_REQUIRED') {
+      const quality = response.photo_quality;
+      resultContainer.innerHTML = `<div class="card mt-6 border-amber-300"><h2 class="text-xl font-bold">Please retake the photo</h2>
+        <ul class="list-disc pl-5 my-3">${[...quality.issues, ...quality.next_steps].map(text => `<li>${DOM.escapeHtml(text)}</li>`).join('')}</ul>
+        <button type="button" class="btn btn-secondary" id="retakePhoto">Choose another photo</button></div>`;
+      DOM.byId('retakePhoto').addEventListener('click', () => DOM.byId('imageUpload').click());
+    } else if (API.isSuccess(response)) {
       displayResult(response, resultContainer);
+      const result = response.result;
+      const weatherBox = DOM.byId('scanWeatherResult');
+      if (location) {
+        weatherBox.textContent = weatherMode === 'demo' ? 'Preparing simulated weather example…' : 'Checking your 24-hour forecast…';
+        const forecast = await API.adviseWeather(API.createEnvelope('C', weatherMode === 'demo' ? 'simulation' : 'farm_advisory', {
+          mode: weatherMode === 'demo' ? 'demo_forecast' : 'forecast_advisory', horizon_hours: 24,
+        }, { location }, { crop: result.crop }));
+        if (generation !== scanGeneration) return;
+        result.weather = weatherContext(forecast);
+        if (result.weather) {
+          const weather = result.weather;
+          weatherBox.innerHTML = `<h4 class="font-semibold">${weather.status === 'SIMULATED' ? 'Simulated weather example — Pune' : 'Forecast for your selected location'}</h4>
+            <p class="text-sm">${DOM.escapeHtml(weather.source)} · ${DOM.escapeHtml(weather.valid_from_utc)} to ${DOM.escapeHtml(weather.valid_to_utc)}</p>
+            <ul class="list-disc pl-5 my-2">${weather.advisory_actions.map(text => `<li>${DOM.escapeHtml(text)}</li>`).join('') || '<li>No configured alert triggered. Continue monitoring.</li>'}</ul>
+            <p class="text-sm">Weather cannot confirm a disease or determine irrigation volume. ${weather.status === 'SIMULATED' ? 'These are example values, not a live forecast.' : 'Forecast values are not field measurements.'}</p>`;
+        } else {
+          weatherBox.textContent = 'Weather unavailable. Your image result is still available; no forecast or simulated replacement was assumed.';
+        }
+      } else {
+        weatherBox.textContent = 'Weather was not requested. You can add it with your next scan.';
+      }
+      initAssistantSection(result);
     } else {
       const errorMessage = API.getErrorMessage(response);
       UI.showError(resultContainer, errorMessage, 'Analysis Failed');
     }
   } catch (error) {
+    if (generation !== scanGeneration) return;
     // Hide loader on error
     LeafLoader.hide(resultContainer);
     UI.showError(resultContainer, 'An unexpected error occurred. Please try again.', 'Error');
     console.error('Analysis error:', error);
   } finally {
     // Remove button loading state
-    if (analyzeBtn) {
+    if (analyzeBtn && generation === scanGeneration) {
       LeafLoader.setButtonLoading(analyzeBtn, false);
     }
   }
@@ -222,15 +297,15 @@ function displayResult(response, container) {
   const confidencePercent = (confidence * 100).toFixed(1);
   const isHealthy = (result.disease || '').toLowerCase() === 'healthy';
   
-  const isLowConfidence = confidence < 0.75;
+  const isLowConfidence = result.assessment?.withheld ?? confidence < 0.75;
   let confidenceBadgeClass = 'bg-emerald-100 text-emerald-800 border-emerald-300';
-  let confidenceText = 'High Confidence';
+  let confidenceText = 'Above review threshold';
   if (isLowConfidence) {
     confidenceBadgeClass = 'bg-amber-100 text-amber-800 border-amber-300';
-    confidenceText = 'Low Confidence (< 75%)';
+    confidenceText = result.assessment?.state === 'CROP_MISMATCH' ? 'Crop mismatch' : 'Below review threshold';
   } else if (confidence < 0.85) {
     confidenceBadgeClass = 'bg-blue-100 text-blue-800 border-blue-300';
-    confidenceText = 'Moderate Confidence';
+    confidenceText = 'Above review threshold';
   }
 
   const severity = isLowConfidence ? 'Triage Required' : (result.severity || 'moderate').toLowerCase();
@@ -247,13 +322,13 @@ function displayResult(response, container) {
 
   // Banner background and titles based on confidence state
   let bannerBg = isHealthy ? 'bg-[#0f4c3a]' : 'bg-[#15352b]';
-  let bannerTag = isHealthy ? 'Healthy Foliage Assessment' : 'Pathology Diagnostic Report';
+  let bannerTag = 'Possible model match';
   let conditionTitle = `<span class="text-white">${DOM.escapeHtml(result.crop || 'Plant')}:</span> <span class="${isHealthy ? 'text-emerald-300' : 'text-[#dcefa8]'} font-semibold">${DOM.escapeHtml(result.disease || 'Detected Condition')}</span>`;
   
   if (isLowConfidence) {
     bannerBg = 'bg-[#4a3410]';
-    bannerTag = 'Inconclusive / Low Confidence Assessment';
-    conditionTitle = `<span class="text-white">${DOM.escapeHtml(result.crop || 'Plant')}:</span> <span class="text-amber-200 font-semibold">Unconfirmed (Possible: ${DOM.escapeHtml(result.disease || 'Condition')})</span>`;
+    bannerTag = result.assessment?.state === 'CROP_MISMATCH' ? 'Crop selection needs checking' : 'Inconclusive assessment';
+    conditionTitle = '<span class="text-white">Photo needs verification</span>';
   }
 
   container.innerHTML = `
@@ -274,12 +349,14 @@ function displayResult(response, container) {
         </div>
         
         <div class="px-4 py-2.5 rounded-lg bg-white/5 border border-white/10 text-right">
-          <p class="text-[11px] ${isLowConfidence ? 'text-amber-200' : 'text-gray-300'} uppercase tracking-wider font-medium">Confidence Score</p>
+          <p class="text-[11px] ${isLowConfidence ? 'text-amber-200' : 'text-gray-300'} uppercase tracking-wider font-medium">Model score</p>
           <p class="text-2xl font-bold text-white tracking-tight">${confidencePercent}%</p>
         </div>
       </div>
 
       <div class="p-6 sm:p-7 space-y-6">
+        <p class="text-sm">${DOM.escapeHtml(result.assessment?.message || 'Possible match; confirm in the field.')} The model score is not a probability that the diagnosis is correct.</p>
+        ${(result.photo_quality?.warnings || []).map(text => `<p class="p-3 bg-amber-50 text-amber-900 rounded-lg">${DOM.escapeHtml(text)}</p>`).join('')}
         
         <!-- Metrics Matrix -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -298,10 +375,10 @@ function displayResult(response, container) {
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
-              <span class="text-[11px] font-semibold uppercase tracking-wider">Identified Condition</span>
+              <span class="text-[11px] font-semibold uppercase tracking-wider">Possible condition</span>
             </div>
             <p class="text-base font-bold ${isLowConfidence ? 'text-amber-800' : (isHealthy ? 'text-emerald-700' : 'text-rose-700')}">
-              ${isLowConfidence ? `Unconfirmed (Possible: ${DOM.escapeHtml(result.disease || 'Unknown')})` : DOM.escapeHtml(result.disease || 'None')}
+              ${isLowConfidence ? 'Not determined' : DOM.escapeHtml(result.disease || 'None')}
             </p>
           </div>
 
@@ -310,7 +387,7 @@ function displayResult(response, container) {
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
               </svg>
-              <span class="text-[11px] font-semibold uppercase tracking-wider">Severity Level</span>
+              <span class="text-[11px] font-semibold uppercase tracking-wider">Reference severity</span>
             </div>
             <span class="inline-block px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wide ${severityBadgeClass}">
               ${DOM.escapeHtml(severity)}
@@ -322,7 +399,7 @@ function displayResult(response, container) {
               <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              <span class="text-[11px] font-semibold uppercase tracking-wider">Reliability</span>
+              <span class="text-[11px] font-semibold uppercase tracking-wider">Review status</span>
             </div>
             <span class="inline-block px-2 py-0.5 rounded text-xs font-semibold border ${confidenceBadgeClass}">
               ${confidenceText}
@@ -336,10 +413,10 @@ function displayResult(response, container) {
               <svg class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
               </svg>
-              <span>Diagnosis Inconclusive — Model Confidence Below Safe Threshold (75%)</span>
+              <span>Check the photo before acting</span>
             </div>
             <p class="text-sm text-amber-800 leading-relaxed">
-              The AI model cannot confirm this pathology with high certainty (Confidence: <strong>${confidencePercent}%</strong>). The visual pattern suggests <strong>${DOM.escapeHtml(result.crop)}: ${DOM.escapeHtml(result.disease)}</strong> as a potential possibility, but it is not confirmed. Please consult a qualified agricultural extension officer or certified agronomist for field verification before applying any chemical treatment.
+              ${DOM.escapeHtml(result.assessment?.message || 'The model score is too low to suggest a disease reliably.')} Disease-specific treatments are withheld. Choose another photo or ask an agricultural extension officer to inspect the plant.
             </p>
           </div>
         ` : ''}
@@ -351,7 +428,7 @@ function displayResult(response, container) {
               <svg class="w-4 h-4" style="color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
-              ${isLowConfidence ? 'Potential Match Description (Reference Only)' : 'Pathological Description'}
+              ${isLowConfidence ? 'Why another check is needed' : 'Reference description'}
             </h4>
             <p class="text-sm leading-relaxed" style="color: var(--text-primary);">${DOM.escapeHtml(result.description)}</p>
           </div>
@@ -365,7 +442,7 @@ function displayResult(response, container) {
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
               </svg>
-              ${isLowConfidence ? 'Symptoms to Check for Field Verification' : 'Visible Symptoms'}
+              Symptoms to check in the field
             </h4>
             <div class="grid sm:grid-cols-2 gap-2">
               ${symptoms.map(s => `
@@ -387,7 +464,7 @@ function displayResult(response, container) {
               <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
               </svg>
-              ${isLowConfidence ? 'General Preventative Actions (If Suspected)' : 'Recommended Agronomic Actions & Treatments'}
+              ${isLowConfidence ? 'How to get a clearer result' : 'Precautions to discuss after field verification'}
             </h4>
             <div class="space-y-2">
               ${recommendations.map(r => `
@@ -402,6 +479,8 @@ function displayResult(response, container) {
           </div>
         ` : ''}
 
+        <section id="scanWeatherResult" class="p-4 bg-gray-50 border border-gray-200 rounded-lg" aria-live="polite"></section>
+        <button type="button" id="chooseAnotherPhoto" class="btn btn-secondary">Choose another photo</button>
         <!-- Module 6: Grounded GenAI Farmer Assistant Section -->
         <div class="mt-8 pt-6 border-t border-gray-200" id="assistantSection">
           <div class="bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-xl p-6 text-white shadow-md">
@@ -493,7 +572,7 @@ function displayResult(response, container) {
   `;
 
   // Initialize interactive assistant logic
-  initAssistantSection(result);
+  DOM.byId('chooseAnotherPhoto').addEventListener('click', () => DOM.byId('imageUpload').click());
 }
 
 /**
@@ -513,6 +592,7 @@ function initAssistantSection(result) {
   const sessionId = 'session-' + Math.random().toString(36).slice(2);
   let assistantContext = null;
   let explanationRequest = null;
+  let explanationGeneration = 0;
 
   // Build context payload — disease_label MUST be the raw model class label
   let contextPayload;
@@ -526,6 +606,8 @@ function initAssistantSection(result) {
 
   async function loadExplanation() {
     if (!explanationEl) return;
+    const generation = ++explanationGeneration;
+    assistantContext = null;
     
     // Show leaf loader inline
     const loader = LeafLoader.createInline('Loading guidance...');
@@ -534,6 +616,7 @@ function initAssistantSection(result) {
     
     try {
       const response = await API.explainAssistant({ ...contextPayload, lang: currentLang });
+      if (generation !== explanationGeneration || !explanationEl.isConnected) return null;
       if (response && response.explanation && response.context) {
         explanationEl.innerHTML = DOM.escapeHtml(response.explanation).replace(/\n/g, '<br>');
         assistantContext = response.context;
@@ -655,6 +738,7 @@ function initAssistantSection(result) {
  * Handle clear button click
  */
 function handleClear() {
+  scanGeneration += 1;
   selectedFile = null;
   
   const uploadInput = DOM.byId('imageUpload');
@@ -667,11 +751,11 @@ function handleClear() {
   
   if (uploadInput) uploadInput.value = '';
   if (previewContainer) previewContainer.innerHTML = '';
-  if (analyzeBtn) analyzeBtn.classList.add('hidden');
+  if (analyzeBtn) { LeafLoader.setButtonLoading(analyzeBtn, false); analyzeBtn.classList.add('hidden'); }
   if (clearBtn) clearBtn.classList.add('hidden');
   if (resultContainer) resultContainer.innerHTML = '';
   if (errorContainer) errorContainer.innerHTML = '';
-  if (uploadLabel) uploadLabel.style.display = 'flex';
+  if (uploadLabel) { uploadLabel.classList.remove('hidden'); uploadLabel.style.display = 'flex'; }
 }
 
 export { handleAnalyze, handleClear };

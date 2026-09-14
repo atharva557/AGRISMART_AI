@@ -8,13 +8,15 @@ import textwrap
 import unittest
 from unittest.mock import patch
 
-from PIL import Image
+from PIL import Image, ImageDraw
 from app import create_app
 
 
 def image_bytes():
     buffer = io.BytesIO()
-    Image.new("RGB", (8, 8), "green").save(buffer, format="PNG")
+    photo = Image.new("RGB", (256, 256), "green")
+    ImageDraw.Draw(photo).ellipse((30, 30, 220, 220), fill="olive")
+    photo.save(buffer, format="PNG")
     buffer.seek(0)
     return buffer
 

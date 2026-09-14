@@ -277,9 +277,10 @@ class APIService {
    * @param {Function} onProgress - Progress callback
    * @returns {Promise<Object>}
    */
-  async predictDisease(imageFile, onProgress = null) {
+  async predictDisease(imageFile, onProgress = null, crop = '') {
     const formData = new FormData();
     formData.append('image', imageFile);
+    if (crop) formData.append('crop', crop);
     
     return await this.uploadFile('/api/disease/predict', formData, onProgress);
   }

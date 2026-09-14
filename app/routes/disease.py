@@ -12,11 +12,15 @@ Security measures implemented:
 import logging
 import os
 import uuid
+import json
+from pathlib import Path
 
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 
 from services.disease_info import get_disease_info
+from services.photo_quality import assess_photo
+from services.diagnosis_assessment import diagnosis_assessment
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +33,13 @@ _MAX_IMAGE_PIXELS = 50_000_000  # 50 megapixels — sufficient for any field cam
 
 # Allowed file extensions (lower-cased).
 _ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+
+@bp.get("/api/disease/classes")
+def classes():
+    labels = json.loads((Path(__file__).resolve().parents[2] / "model/classes.json").read_text(encoding="utf-8"))
+    return jsonify({"labels": labels, "crops": sorted({label.split("___")[0] for label in labels}),
+                    "scope": "Local model classes; organizer label alignment is pending."})
 
 
 def _allowed_extension(filename: str) -> bool:
@@ -107,6 +118,18 @@ def predict():
                 "result": None,
             }), 422
 
+        with Image.open(filepath) as photo:
+            quality = assess_photo(photo)
+        if quality["status"] == "RETAKE_REQUIRED":
+            return jsonify({"status": "RETAKE_REQUIRED", "result": None,
+                            "message": "Please retake the photo before analysis.", "photo_quality": quality}), 200
+
+        selected_crop = request.form.get("crop", "").strip()
+        if selected_crop:
+            labels = json.loads((Path(__file__).resolve().parents[2] / "model/classes.json").read_text(encoding="utf-8"))
+            if selected_crop not in {label.split("___")[0] for label in labels}:
+                return jsonify({"status": "INVALID_INPUT", "message": "Choose a supported crop or leave it unspecified.", "result": None}), 422
+
         # ── 6. Run neural network inference ─────────────────────────────────
         diagnostics = predict_detailed(filepath)
         _cleanup(filepath)
@@ -115,6 +138,7 @@ def predict():
         confidence = diagnostics["confidence"]
         crop = diagnostics["crop"]
         disease = diagnostics["disease"]
+        assessment = diagnosis_assessment(confidence, crop_mismatch=bool(selected_crop and selected_crop != label.split("___")[0]))
 
         # ── 7. Knowledge-base lookup ─────────────────────────────────────────
         kb_entry = get_disease_info(label)
@@ -150,11 +174,21 @@ def predict():
             symptoms = kb_entry.get("symptoms", ["Visible discoloration or lesions on leaf surface."])
             severity = kb_entry.get("severity", "moderate")
 
+        if assessment["withheld"]:
+            display_title = "Photo needs verification"
+            description = assessment["message"]
+            symptoms = []
+            severity = "unknown"
+            recommendations = assessment["next_steps"]
+
         return jsonify({
             "status": "OK",
             "result": {
                 "disease_name": display_title,
                 "raw_label": label,
+                "selected_crop": selected_crop or None,
+                "assessment": assessment,
+                "photo_quality": quality,
                 "crop": crop,
                 "disease": disease,
                 "confidence": confidence,
