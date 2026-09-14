@@ -67,7 +67,7 @@ import logging
 from typing import Dict, Any, List, Optional
 
 from services.disease_info import get_disease_info
-from utils.translation_utils import translate_text, SUPPORTED_LANGUAGES
+from utils.translation_utils import translate_text, translate_paragraph, SUPPORTED_LANGUAGES
 
 logger = logging.getLogger(__name__)
 
@@ -173,12 +173,14 @@ class FarmerAssistant:
                                   "covering what was found and what to do next.",
                     context=context,
                     history=None,
+                    lang=lang,
                 )
-                return translate_text(text, lang)
+                # Gemini already responded in the target language, no need to translate.
+                return text
             except Exception as exc:
                 logger.warning("LLM explanation failed (%s) — using template fallback.", exc)
 
-        return translate_text(self._template_explanation(context), lang)
+        return translate_paragraph(self._template_explanation(context), lang)
 
     # ------------------------------------------------------------------ #
     # Conversational Q&A
@@ -195,10 +197,12 @@ class FarmerAssistant:
         last few turns of this session_id.
         """
         history = self._sessions.setdefault(session_id, [])
+        used_llm = False
 
         if self._client:
             try:
-                reply = self._llm_generate(user_message=message, context=context, history=history)
+                reply = self._llm_generate(user_message=message, context=context, history=history, lang=lang)
+                used_llm = True
             except Exception as exc:
                 logger.warning("LLM chat failed (%s) — using template fallback.", exc)
                 reply = self._template_qa(message, context)
@@ -210,7 +214,8 @@ class FarmerAssistant:
         # keep only the last 6 turns (12 messages) to bound context size
         self._sessions[session_id] = history[-12:]
 
-        return translate_text(reply, lang)
+        # Gemini already responded in the target language; only translate for template fallback.
+        return reply if used_llm else translate_paragraph(reply, lang)
 
     def reset_session(self, session_id: str = "default") -> None:
         self._sessions.pop(session_id, None)
@@ -218,13 +223,34 @@ class FarmerAssistant:
     # ------------------------------------------------------------------ #
     # LLM-backed generation (Gemini, grounded via system instruction + context JSON)
     # ------------------------------------------------------------------ #
-    def _llm_generate(self, user_message: str, context: Dict[str, Any], history: Optional[List[Dict[str, str]]]) -> str:
+    def _llm_generate(self, user_message: str, context: Dict[str, Any], history: Optional[List[Dict[str, str]]], lang: str = "en") -> str:
         from google.genai import types
+
+        # Build the language instruction so Gemini responds directly in the
+        # target language instead of requiring a fragile post-translation step.
+        lang_name = SUPPORTED_LANGUAGES.get(lang, "English")
+        if lang != "en":
+            lang_instruction = (
+                f"\n\nIMPORTANT — LANGUAGE INSTRUCTION:\n"
+                f"You MUST respond entirely in {lang_name} ({lang}). "
+                f"Do NOT respond in English. Write your full answer in {lang_name}.\n"
+            )
+        else:
+            lang_instruction = ""
 
         grounded_prompt = (
             f"CONTEXT (the only facts you may use):\n{json.dumps(context, indent=2)}\n\n"
             f"Farmer's message: {user_message}"
+            f"{lang_instruction}"
         )
+
+        # Build the system prompt, appending a language reminder when non-English.
+        system_prompt = _SYSTEM_PROMPT
+        if lang != "en":
+            system_prompt += (
+                f"\n6. You MUST respond in {lang_name}. The farmer speaks {lang_name}, "
+                f"so write your entire response in {lang_name} — not English.\n"
+            )
 
         # Gemini's multi-turn format uses role "model" for the assistant
         # (not "assistant" like OpenAI/Anthropic) — translate our stored
@@ -240,7 +266,7 @@ class FarmerAssistant:
             model=self.model,
             contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=_SYSTEM_PROMPT,
+                system_instruction=system_prompt,
                 max_output_tokens=400,
             ),
         )
