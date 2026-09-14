@@ -20,6 +20,12 @@ except ImportError:
 
 CONFIDENCE_THRESHOLD = 0.75
 
+# Explicit pixel ceiling guards against decompression-bomb payloads.
+# PIL's built-in default (~89 M px) is preserved by keeping this at the same
+# value used by the upload route. Both layers enforce the same limit.
+_MAX_IMAGE_PIXELS = 50_000_000
+Image.MAX_IMAGE_PIXELS = _MAX_IMAGE_PIXELS
+
 
 def get_image_transform(img_size: int, mean: list, std: list) -> transforms.Compose:
     """Build the standard evaluation transform for image input."""

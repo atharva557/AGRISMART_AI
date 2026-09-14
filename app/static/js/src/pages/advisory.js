@@ -5,6 +5,7 @@
 import API from '../core/api.js';
 import UI from '../components/ui.js';
 import DOM from '../utils/dom.js';
+import LeafLoader from '../components/loader.js';
 
 // Initialize advisory page
 document.addEventListener('DOMContentLoaded', () => {
@@ -60,21 +61,23 @@ function displayResult(data, container) {
 
 /**
  * Create result summary based on module
+ * Uses CSS variables for Dark Mode compatibility — no hard-coded Tailwind colour classes.
  * @param {Object} data - API response
  * @returns {HTMLElement}
  */
 function createResultSummary(data) {
   const summary = document.createElement('div');
   summary.className = 'output__summary';
-  
+
   const title = document.createElement('h3');
-  title.className = 'text-xl font-bold text-gray-900 mb-3';
-  
+  // CSS variable–based colour so it works in both Light and Dark
+  title.style.cssText = 'font-size:1.15rem;font-weight:700;margin:0 0 0.75rem;color:var(--text-primary);';
+
   const body = document.createElement('div');
-  body.className = 'text-gray-700';
-  
+  body.style.color = 'var(--text-secondary)';
+
   const result = data.result;
-  
+
   if (!result) {
     title.textContent = 'Result withheld';
     const reason = data.reasons?.[0]?.message || 'The request could not be completed.';
@@ -83,12 +86,12 @@ function createResultSummary(data) {
     // Crop Recommendation
     title.textContent = 'Top crop candidates';
     const list = document.createElement('ol');
-    list.className = 'list-decimal list-inside space-y-2';
+    list.style.cssText = 'padding-left:1.25rem;margin:0;display:flex;flex-direction:column;gap:0.5rem;';
     result.candidates.forEach((candidate) => {
       const item = document.createElement('li');
-      item.className = 'text-gray-800';
-      item.innerHTML = `<strong>${candidate.crop}</strong> 
-        <span class="text-gray-600">· ${(candidate.model_score * 100).toFixed(1)}% model score</span>`;
+      item.style.color = 'var(--text-primary)';
+      item.innerHTML = `<strong>${candidate.crop}</strong>
+        <span style="color:var(--text-muted)"> · ${(candidate.model_score * 100).toFixed(1)}% model score</span>`;
       list.append(item);
     });
     body.append(list);
@@ -96,25 +99,27 @@ function createResultSummary(data) {
     // Irrigation Advisory
     title.textContent = result.action === 'IRRIGATE' ? 'Irrigation indicated' : 'No irrigation needed';
     const desc = document.createElement('p');
+    desc.style.margin = '0';
     desc.textContent = result.action === 'IRRIGATE'
       ? `Apply ${result.gross_depth_mm} mm gross depth, approximately ${result.volume_m3} m³ over ${result.target_area_ha} ha.`
       : `Projected depletion is ${result.projected_depletion_mm} mm, below the ${result.readily_available_water_mm} mm threshold. No irrigation needed.`;
     body.append(desc);
   } else if (data.module === 'C') {
     // Weather Advisory
-    title.textContent = result.alerts.length 
-      ? `${result.alerts.length} condition${result.alerts.length === 1 ? '' : 's'} flagged` 
+    const count = result.alerts ? result.alerts.length : 0;
+    title.textContent = count
+      ? `${count} condition${count === 1 ? '' : 's'} flagged`
       : 'No alerts triggered';
-    const list = document.createElement('ul');
-    list.className = 'list-disc list-inside space-y-2';
-    result.alerts.forEach((alert) => {
-      const item = document.createElement('li');
-      item.className = 'text-gray-800';
-      item.innerHTML = `<strong>${alert.flag.replaceAll('_', ' ')}</strong> 
-        <span class="text-gray-600">— ${alert.action}</span>`;
-      list.append(item);
-    });
-    if (result.alerts.length > 0) {
+    if (count > 0) {
+      const list = document.createElement('ul');
+      list.style.cssText = 'padding-left:1.25rem;margin:0;display:flex;flex-direction:column;gap:0.5rem;';
+      result.alerts.forEach((alert) => {
+        const item = document.createElement('li');
+        item.style.color = 'var(--text-primary)';
+        item.innerHTML = `<strong>${alert.flag.replaceAll('_', ' ')}</strong>
+          <span style="color:var(--text-muted)"> — ${alert.action}</span>`;
+        list.append(item);
+      });
       body.append(list);
     } else {
       body.textContent = 'Weather conditions are within normal parameters for the next 24 hours.';
@@ -123,28 +128,29 @@ function createResultSummary(data) {
     // Sustainability Scoring
     title.textContent = `Sustainability Score: ${result.score.toFixed(2)} / 100`;
     const desc = document.createElement('p');
+    desc.style.margin = '0 0 0.75rem';
     desc.textContent = result.yield_gate_applied
       ? 'The resource score was capped because yield retention fell below 95%. Ensure crop health is maintained.'
       : `Yield retention: ${(result.yield_retention_ratio * 100).toFixed(1)}%. Formula version ${result.formula_version}.`;
     body.append(desc);
-    
-    // Add breakdown if available
+
+    // Component score breakdown
     if (result.component_scores) {
       const breakdown = document.createElement('div');
-      breakdown.className = 'mt-3 grid grid-cols-3 gap-3';
+      breakdown.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:0.75rem;margin-top:0.25rem;';
       Object.entries(result.component_scores).forEach(([key, value]) => {
         const card = document.createElement('div');
-        card.className = 'p-3 bg-gray-50 rounded border border-gray-200';
+        card.style.cssText = 'padding:0.75rem;background:var(--surface-alt);border:1px solid var(--border);border-radius:0.5rem;';
         card.innerHTML = `
-          <div class="text-xs text-gray-600 mb-1">${key}</div>
-          <div class="text-lg font-bold text-gray-900">${value.toFixed(1)}</div>
+          <div style="font-size:0.7rem;color:var(--text-muted);margin-bottom:0.25rem;text-transform:capitalize;">${key}</div>
+          <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary);">${value.toFixed(1)}</div>
         `;
         breakdown.append(card);
       });
       body.append(breakdown);
     }
   }
-  
+
   summary.append(title, body);
   return summary;
 }
@@ -160,9 +166,19 @@ function initModuleA() {
     e.preventDefault();
     
     const output = DOM.byId('crop-output');
+    const submitBtn = form.querySelector('button[type="submit"]');
     if (!output) return;
     
-    UI.showLoading(output, 'Analyzing soil and climate data...');
+    // Clear previous results
+    output.innerHTML = '';
+    
+    // Show leaf loader
+    LeafLoader.show(output, 'Analyzing soil and climate data...');
+    
+    // Set button loading state
+    if (submitBtn) {
+      LeafLoader.setButtonLoading(submitBtn, true);
+    }
     
     const payload = API.createEnvelope('A', 'dataset_benchmark', {
       mode: 'source_dataset_classifier',
@@ -182,10 +198,16 @@ function initModuleA() {
     
     try {
       const data = await API.recommendCrops(payload);
+      LeafLoader.hide(output);
       displayResult(data, output);
     } catch (error) {
+      LeafLoader.hide(output);
       UI.showError(output, 'Request failed. Please try again.');
       console.error('Module A error:', error);
+    } finally {
+      if (submitBtn) {
+        LeafLoader.setButtonLoading(submitBtn, false);
+      }
     }
   });
 }
@@ -201,9 +223,19 @@ function initModuleB() {
     e.preventDefault();
     
     const output = DOM.byId('irrigation-output');
+    const submitBtn = form.querySelector('button[type="submit"]');
     if (!output) return;
     
-    UI.showLoading(output, 'Calculating water balance...');
+    // Clear previous results
+    output.innerHTML = '';
+    
+    // Show leaf loader
+    LeafLoader.show(output, 'Calculating water balance...');
+    
+    // Set button loading state
+    if (submitBtn) {
+      LeafLoader.setButtonLoading(submitBtn, true);
+    }
     
     const area = getNumber(form, 'area');
     const payload = API.createEnvelope('B', 'simulation', {
@@ -231,10 +263,16 @@ function initModuleB() {
     
     try {
       const data = await API.adviseIrrigation(payload);
+      LeafLoader.hide(output);
       displayResult(data, output);
     } catch (error) {
+      LeafLoader.hide(output);
       UI.showError(output, 'Request failed. Please try again.');
       console.error('Module B error:', error);
+    } finally {
+      if (submitBtn) {
+        LeafLoader.setButtonLoading(submitBtn, false);
+      }
     }
   });
 }
@@ -268,11 +306,19 @@ function initModuleC() {
 async function runWeatherAdvisory(isDemo) {
   const form = DOM.byId('weather-form');
   const output = DOM.byId('weather-output');
-  
+  const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+  const demoBtn = DOM.byId('weather-demo');
+
   if (!form || !output) return;
-  
-  UI.showLoading(output, 'Fetching weather forecast...');
-  
+
+  // Clear previous results and show leaf loader
+  output.innerHTML = '';
+  LeafLoader.show(output, 'Fetching weather forecast...');
+
+  // Set button loading states
+  if (submitBtn && !isDemo) LeafLoader.setButtonLoading(submitBtn, true);
+  if (demoBtn && isDemo) LeafLoader.setButtonLoading(demoBtn, true);
+
   const farm = {
     field_id: isDemo ? 'dashboard-demo' : 'dashboard-location',
     location: {
@@ -281,18 +327,23 @@ async function runWeatherAdvisory(isDemo) {
     },
     area_ha: 1
   };
-  
+
   const payload = API.createEnvelope('C', isDemo ? 'simulation' : 'farm_advisory', {
     mode: isDemo ? 'demo_forecast' : 'forecast_advisory',
     horizon_hours: 24
   }, farm);
-  
+
   try {
     const data = await API.adviseWeather(payload);
+    LeafLoader.hide(output);
     displayResult(data, output);
   } catch (error) {
+    LeafLoader.hide(output);
     UI.showError(output, 'Request failed. Please try again.');
     console.error('Module C error:', error);
+  } finally {
+    if (submitBtn && !isDemo) LeafLoader.setButtonLoading(submitBtn, false);
+    if (demoBtn && isDemo) LeafLoader.setButtonLoading(demoBtn, false);
   }
 }
 
@@ -302,15 +353,19 @@ async function runWeatherAdvisory(isDemo) {
 function initModuleD() {
   const form = DOM.byId('sustainability-form');
   if (!form) return;
-  
+
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const output = DOM.byId('sustainability-output');
+    const submitBtn = form.querySelector('button[type="submit"]');
     if (!output) return;
-    
-    UI.showLoading(output, 'Computing sustainability score...');
-    
+
+    // Clear previous results and show leaf loader
+    output.innerHTML = '';
+    LeafLoader.show(output, 'Computing sustainability score...');
+    if (submitBtn) LeafLoader.setButtonLoading(submitBtn, true);
+
     const createRecord = (prefix) => ({
       crop: 'tomato',
       location: 'Dashboard simulated plot',
@@ -324,7 +379,7 @@ function initModuleD() {
       nitrogen: { ...API.createMeasurement(getNumber(form, `${prefix}Nitrogen`), 'kg_N'), accounting_scope: 'Total nitrogen nutrient from mineral and organic fertilizers' },
       harvest: { ...API.createMeasurement(getNumber(form, `${prefix}Harvest`), 'kg'), accounting_scope: 'Whole-cycle harvested output' },
     });
-    
+
     const payload = API.createEnvelope('D', 'simulation', {
       mode: 'resource_comparison',
       baseline: createRecord('baseline'),
@@ -335,13 +390,17 @@ function initModuleD() {
         references: []
       },
     });
-    
+
     try {
       const data = await API.scoreSustainability(payload);
+      LeafLoader.hide(output);
       displayResult(data, output);
     } catch (error) {
+      LeafLoader.hide(output);
       UI.showError(output, 'Request failed. Please try again.');
       console.error('Module D error:', error);
+    } finally {
+      if (submitBtn) LeafLoader.setButtonLoading(submitBtn, false);
     }
   });
 }
@@ -399,49 +458,153 @@ function initModuleE() {
   function appendMessage(role, text) {
     const msgDiv = document.createElement('div');
     if (role === 'user') {
-      msgDiv.className = 'p-3 bg-emerald-700 text-white rounded-lg text-sm ml-6';
-      msgDiv.innerHTML = `<span class="text-xs font-semibold text-emerald-200 block mb-1">You:</span> ${DOM.escapeHtml(text)}`;
+      // User bubble: dark green bg, white text — works in both modes
+      msgDiv.className = 'p-3 rounded-lg text-sm ml-6';
+      msgDiv.style.cssText = 'background-color:#176a46; color:#ffffff;';
+      msgDiv.innerHTML = `<span class="text-xs font-semibold block mb-1" style="color:#a8e6c4;">You:</span> ${DOM.escapeHtml(text)}`;
     } else {
-      msgDiv.className = 'p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 mr-6';
-      msgDiv.innerHTML = `<span class="text-xs font-bold text-emerald-700 block mb-1">AgriSmart AI Assistant:</span> ${DOM.escapeHtml(text).replace(/\n/g, '<br>')}`;
+      // Assistant bubble: uses CSS vars so it adapts to light/dark mode
+      msgDiv.className = 'p-3 rounded-lg text-sm mr-6';
+      msgDiv.style.cssText = 'background-color:var(--surface); border:1px solid var(--border); color:var(--text-primary);';
+      msgDiv.innerHTML = `<span class="text-xs font-bold block mb-1" style="color:var(--primary);">AgriSmart AI Assistant:</span> ${DOM.escapeHtml(text).replace(/\n/g, '<br>')}`;
     }
     chatLog.appendChild(msgDiv);
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
+  /* ─── Leaf orbit overlay helpers ──────────────────────── */
+
+  /**
+   * Create and inject the leaf orbit overlay into <body>.
+   * Returns { overlay, pctEl } so the caller can update / remove it.
+   */
+  function createLeafOverlay() {
+    const overlay = document.createElement('div');
+    overlay.className = 'leaf-orbit-overlay';
+    overlay.setAttribute('role', 'status');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.setAttribute('aria-label', 'Processing AI response');
+
+    overlay.innerHTML = `
+      <div class="leaf-orbit__ring">
+        <!-- Percentage counter -->
+        <span class="leaf-orbit__pct" id="leaf-orbit-pct" aria-hidden="true">0%</span>
+        <!-- Orbiting leaf -->
+        <span class="leaf-orbit__leaf" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C10.8 2 9.6 2.6 8.9 3.8C8.2 5 8.2 6.4 8.3 7.7C8.5 9.5 9.5 11 10.8 12C9.5 13.2 8 15.2 8 17.5C8 19.8 9.4 21.5 12 22C14.6 21.5 16 19.8 16 17.5C16 15.2 14.5 13.2 13.2 12C14.5 11 15.5 9.5 15.7 7.7C15.8 6.4 15.8 5 15.1 3.8C14.4 2.6 13.2 2 12 2Z"
+              fill="currentColor" opacity="0.92"/>
+            <path d="M12 8C12 8 11 10 11 12" stroke="currentColor" stroke-width="0.9"
+              stroke-linecap="round" opacity="0.55"/>
+          </svg>
+        </span>
+      </div>
+      <p class="leaf-orbit__label">Consulting agronomic knowledge base…</p>
+    `;
+
+    document.body.appendChild(overlay);
+
+    // Trigger fade-in on next frame so CSS transition fires
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => overlay.classList.add('is-visible'));
+    });
+
+    const pctEl = overlay.querySelector('#leaf-orbit-pct');
+    return { overlay, pctEl };
+  }
+
+  /**
+   * Animate percentage from current value toward a target, updating pctEl.
+   * Returns a cancel function.
+   */
+  function animatePct(pctEl, fromVal, toVal, durationMs) {
+    const start = performance.now();
+    let rafId;
+
+    function step(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / durationMs, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(fromVal + (toVal - fromVal) * eased);
+      if (pctEl) pctEl.textContent = current + '%';
+      if (progress < 1) rafId = requestAnimationFrame(step);
+    }
+
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }
+
+  /**
+   * Fade out and remove the overlay.
+   */
+  function removeLeafOverlay(overlay) {
+    overlay.classList.remove('is-visible');
+    // Wait for CSS fade-out (320ms) then remove from DOM
+    setTimeout(() => {
+      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+    }, 350);
+  }
+
+  /* ─── sendChatMessage with leaf orbit overlay ──────────── */
+
   async function sendChatMessage(message) {
     if (!message) return;
     appendMessage('user', message);
 
-    const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'p-3 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 mr-6 animate-pulse';
-    loadingDiv.innerHTML = '<span class="text-xs font-bold text-emerald-700 block mb-1">AgriSmart AI Assistant:</span> Formulating grounded agronomic response...';
-    chatLog.appendChild(loadingDiv);
-    chatLog.scrollTop = chatLog.scrollHeight;
+    // Disable send button and chips
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.setAttribute('aria-busy', 'true');
+    }
 
-    if (sendBtn) sendBtn.disabled = true;
+    // Show leaf orbit overlay
+    const { overlay, pctEl } = createLeafOverlay();
+
+    // Phase 1: animate 0 → 72% smoothly while request is in-flight
+    // (72% leaves headroom for the response-received phase)
+    let cancelPhase1 = animatePct(pctEl, 0, 72, 2800);
+
+    let response = null;
+    let requestError = null;
 
     try {
-      const response = await API.chatAssistant({
+      response = await API.chatAssistant({
         session_id: sessionId,
-        message: message,
-        context: getActiveDashboardContext(),
-        lang: currentLang,
+        message:    message,
+        context:    getActiveDashboardContext(),
+        lang:       currentLang,
       });
-
-      loadingDiv.remove();
-
-      if (response && response.reply) {
-        appendMessage('assistant', response.reply);
-      } else {
-        appendMessage('assistant', 'I could not process that question. Please try asking about crops, soil, irrigation, or weather.');
-      }
     } catch (err) {
-      loadingDiv.remove();
-      appendMessage('assistant', 'Sorry, I encountered an issue connecting to the advisory service.');
+      requestError = err;
       console.error('Advisory assistant error:', err);
-    } finally {
-      if (sendBtn) sendBtn.disabled = false;
+    }
+
+    // Phase 2: cancel phase-1 animation, read current displayed value,
+    // then animate from wherever we are → 100%
+    cancelPhase1();
+    const currentPct = parseInt(pctEl ? pctEl.textContent : '72', 10) || 72;
+    await new Promise(resolve => {
+      const cancel = animatePct(pctEl, currentPct, 100, 420);
+      setTimeout(() => { cancel(); resolve(); }, 440);
+    });
+
+    // Remove overlay with fade-out
+    removeLeafOverlay(overlay);
+
+    // Re-enable button
+    if (sendBtn) {
+      sendBtn.disabled = false;
+      sendBtn.removeAttribute('aria-busy');
+    }
+
+    // Render result or error
+    if (requestError) {
+      appendMessage('assistant', 'Unable to reach the advisory service. Please check your connection and try again.');
+    } else if (response && response.reply) {
+      appendMessage('assistant', response.reply);
+    } else {
+      appendMessage('assistant', 'I could not process that question. Please try asking about crops, soil, irrigation, or weather.');
     }
   }
 

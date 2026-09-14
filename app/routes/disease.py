@@ -1,7 +1,16 @@
-"""Disease detection API endpoint integrating trained CV model and agronomic KB."""
+"""Disease detection API endpoint integrating trained CV model and agronomic KB.
+
+Security measures implemented:
+- File extension whitelist (png, jpg, jpeg)
+- PIL image open + convert validation before inference (rejects non-images)
+- PIL decompression-bomb protection via MAX_IMAGE_PIXELS limit
+- UUID-prefixed filenames prevent collisions and path traversal
+- Werkzeug secure_filename() sanitises original filename
+- Temporary file always deleted on both success and error paths
+- Internal exception details are NOT exposed in user-facing error messages
+"""
 import logging
 import os
-import os.path
 import uuid
 
 from flask import Blueprint, current_app, jsonify, request
@@ -13,92 +22,129 @@ logger = logging.getLogger(__name__)
 
 bp = Blueprint("disease", __name__)
 
+# Maximum pixel count accepted before inference — guards against decompression bombs.
+# PIL's default is ~89 M pixels. We use a lower explicit ceiling that still covers
+# every realistic crop photo at high resolution.
+_MAX_IMAGE_PIXELS = 50_000_000  # 50 megapixels — sufficient for any field camera
+
+# Allowed file extensions (lower-cased).
+_ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+
+
+def _allowed_extension(filename: str) -> bool:
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in _ALLOWED_EXTENSIONS
+
 
 @bp.post("/api/disease/predict")
 def predict():
     """Disease prediction endpoint with image upload and deep inference."""
-    
-    # Check if file is present
-    if 'image' not in request.files:
+
+    # ── 1. File presence check ──────────────────────────────────────────────
+    if "image" not in request.files:
         return jsonify({
             "status": "INVALID_INPUT",
-            "message": "No image file provided",
-            "result": None
+            "message": "No image file provided. Send a multipart/form-data request with field name 'image'.",
+            "result": None,
         }), 422
-    
-    file = request.files['image']
-    
-    if file.filename == '':
+
+    file = request.files["image"]
+
+    if file.filename == "":
         return jsonify({
             "status": "INVALID_INPUT",
-            "message": "No file selected",
-            "result": None
+            "message": "No file selected.",
+            "result": None,
         }), 422
-    
-    # Validate file type
-    allowed_extensions = {'png', 'jpg', 'jpeg'}
-    if '.' not in file.filename or \
-       file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+
+    # ── 2. Extension whitelist ──────────────────────────────────────────────
+    if not _allowed_extension(file.filename):
         return jsonify({
             "status": "INVALID_INPUT",
-            "message": "Invalid file type. Allowed: JPG, PNG",
-            "result": None
+            "message": "Unsupported file type. Please upload a JPG or PNG image.",
+            "result": None,
         }), 422
-    
-    # Lazy import of deep learning inference module
+
+    # ── 3. Lazy import of deep learning inference module ────────────────────
     try:
         from model.predict import predict_detailed
-    except ImportError as e:
-        logger.error(f"Inference dependency missing: {e}")
+    except ImportError as exc:
+        logger.error("Inference dependency missing: %s", exc)
         return jsonify({
             "status": "ERROR",
-            "message": f"Inference engine dependencies (torch, torchvision, timm, Pillow) not found: {e}. Run 'pip install -r requirements.txt'.",
-            "result": None
+            "message": "Inference engine dependencies are not installed. Run 'pip install -r requirements.txt'.",
+            "result": None,
         }), 503
 
-    # Save file temporarily with UUID prefix to prevent collisions
+    # ── 4. Save to a UUID-prefixed temporary path ───────────────────────────
     safe_name = secure_filename(file.filename)
     filename = f"{uuid.uuid4().hex}_{safe_name}"
-    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
+    upload_folder = current_app.config.get("UPLOAD_FOLDER", "uploads")
     os.makedirs(upload_folder, exist_ok=True)
     filepath = os.path.join(upload_folder, filename)
-    
+    filepath = os.path.normpath(filepath)  # resolve any residual traversal sequences
+
     try:
         file.save(filepath)
-        
-        # Run neural network inference
+
+        # ── 5. Validate the file is actually a readable image ────────────────
+        # This check runs BEFORE inference. It catches:
+        #   - Text/binary files renamed to .jpg
+        #   - Truncated or corrupted files
+        # We also enforce a pixel ceiling to prevent decompression-bomb attacks.
+        try:
+            from PIL import Image
+            Image.MAX_IMAGE_PIXELS = _MAX_IMAGE_PIXELS
+            with Image.open(filepath) as probe:
+                probe.verify()  # raises if not a valid image
+        except Exception as img_err:
+            _cleanup(filepath)
+            logger.warning("Uploaded file is not a valid image: %s", img_err)
+            return jsonify({
+                "status": "INVALID_INPUT",
+                "message": "The uploaded file could not be read as a valid image. "
+                           "Please upload a clear JPG or PNG photograph.",
+                "result": None,
+            }), 422
+
+        # ── 6. Run neural network inference ─────────────────────────────────
         diagnostics = predict_detailed(filepath)
-        
-        # Clean up uploaded temporary file
-        if os.path.exists(filepath):
-            os.remove(filepath)
-            
+        _cleanup(filepath)
+
         label = diagnostics["label"]
         confidence = diagnostics["confidence"]
         crop = diagnostics["crop"]
         disease = diagnostics["disease"]
-        
-        # Lookup verified knowledge base info
+
+        # ── 7. Knowledge-base lookup ─────────────────────────────────────────
         kb_entry = get_disease_info(label)
-        
-        # Format human-readable title
+
+        # ── 8. Build user-facing response ────────────────────────────────────
         if "healthy" in label.lower():
             display_title = f"{crop} — Healthy Foliage"
-            description = kb_entry.get("description", "The leaf appears healthy with no visible signs of pathogen infection.")
+            description = kb_entry.get(
+                "description",
+                "The leaf appears healthy with no visible signs of pathogen infection.",
+            )
             recommendations = kb_entry.get("precautions", [
                 "Maintain standard watering and nutrient schedules.",
                 "Continue routine scouting for early pest or fungal signs.",
-                "Ensure good air circulation between crop beds."
+                "Ensure good air circulation between crop beds.",
             ])
-            symptoms = kb_entry.get("symptoms", ["Normal green coloration", "No visible necrotic spots or mildew"])
+            symptoms = kb_entry.get("symptoms", [
+                "Normal green coloration",
+                "No visible necrotic spots or mildew",
+            ])
             severity = "none"
         else:
             display_title = f"{crop} — {disease}"
-            description = kb_entry.get("description", f"Detected symptoms characteristic of {disease} on {crop}.")
+            description = kb_entry.get(
+                "description",
+                f"Detected symptoms characteristic of {disease} on {crop}.",
+            )
             recommendations = kb_entry.get("precautions", [
                 "Consult with a local agricultural extension officer for field confirmation.",
                 "Isolate or prune visibly infected plant parts to prevent spreading.",
-                "Avoid overhead irrigation to reduce foliage wetness."
+                "Avoid overhead irrigation to reduce foliage wetness.",
             ])
             symptoms = kb_entry.get("symptoms", ["Visible discoloration or lesions on leaf surface."])
             severity = kb_entry.get("severity", "moderate")
@@ -120,25 +166,31 @@ def predict():
                 "symptoms": symptoms,
                 "severity": severity,
                 "recommendations": recommendations,
-                "top_candidates": diagnostics["top_candidates"]
+                "top_candidates": diagnostics["top_candidates"],
             },
             "limitations": [
                 "Model confidence threshold is 75%.",
                 "Consult local agronomists for critical field decisions.",
-                "In-field lighting and dirt may affect accuracy compared to lab benchmarks."
-            ]
+                "In-field lighting and dirt may affect accuracy compared to lab benchmarks.",
+            ],
         }), 200
-        
-    except Exception as e:
-        logger.error(f"Prediction failed: {e}", exc_info=True)
-        # Clean up on error
-        if os.path.exists(filepath):
-            try:
-                os.remove(filepath)
-            except OSError:
-                pass
+
+    except Exception as exc:
+        _cleanup(filepath)
+        # Log the full traceback internally; return a safe generic message to the client.
+        logger.error("Prediction failed for uploaded file: %s", exc, exc_info=True)
         return jsonify({
             "status": "ERROR",
-            "message": f"Prediction failed: {str(e)}",
-            "result": None
+            "message": "An error occurred while analysing the image. "
+                       "Please try again with a clear, well-lit crop photograph.",
+            "result": None,
         }), 500
+
+
+def _cleanup(filepath: str) -> None:
+    """Remove a temporary upload file, ignoring errors."""
+    try:
+        if os.path.exists(filepath):
+            os.remove(filepath)
+    except OSError:
+        pass

@@ -15,4 +15,4 @@ class Config:
     WEATHER_API_KEY = os.getenv("WEATHER_API_KEY", "")
     ASSISTANT_API_KEY = os.getenv("ASSISTANT_API_KEY", "")
     GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("ASSISTANT_API_KEY", "")
-    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+    GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")

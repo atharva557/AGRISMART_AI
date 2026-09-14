@@ -6,6 +6,7 @@ import API from '../core/api.js';
 import UI from '../components/ui.js';
 import DOM from '../utils/dom.js';
 import { Format } from '../utils/format.js';
+import LeafLoader from '../components/loader.js';
 
 // State
 let selectedFile = null;
@@ -162,14 +163,28 @@ async function handleAnalyze() {
   }
   
   const resultContainer = DOM.byId('analysisResult');
+  const analyzeBtn = DOM.byId('analyzeBtn');
+  
   if (!resultContainer) return;
   
-  UI.showLoading(resultContainer, 'Analyzing image...');
+  // Clear previous results
+  resultContainer.innerHTML = '';
+  
+  // Show leaf loader
+  LeafLoader.show(resultContainer, 'Analyzing crop image...');
+  
+  // Set button loading state
+  if (analyzeBtn) {
+    LeafLoader.setButtonLoading(analyzeBtn, true);
+  }
   
   try {
     const response = await API.predictDisease(selectedFile, (progress) => {
       console.log(`Upload progress: ${progress.toFixed(0)}%`);
     });
+    
+    // Hide loader
+    LeafLoader.hide(resultContainer);
     
     if (API.isSuccess(response)) {
       displayResult(response, resultContainer);
@@ -178,8 +193,15 @@ async function handleAnalyze() {
       UI.showError(resultContainer, errorMessage, 'Analysis Failed');
     }
   } catch (error) {
+    // Hide loader on error
+    LeafLoader.hide(resultContainer);
     UI.showError(resultContainer, 'An unexpected error occurred. Please try again.', 'Error');
     console.error('Analysis error:', error);
+  } finally {
+    // Remove button loading state
+    if (analyzeBtn) {
+      LeafLoader.setButtonLoading(analyzeBtn, false);
+    }
   }
 }
 
@@ -324,14 +346,14 @@ function displayResult(response, container) {
 
         <!-- Description Box -->
         ${result.description ? `
-          <div class="p-4 bg-gray-50/80 border border-gray-200 rounded-lg">
-            <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-              <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="p-4 rounded-lg" style="background-color: var(--surface-subtle); border: 1px solid var(--border);">
+            <h4 class="text-xs font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5" style="color: var(--text-primary);">
+              <svg class="w-4 h-4" style="color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
               </svg>
               ${isLowConfidence ? 'Potential Match Description (Reference Only)' : 'Pathological Description'}
             </h4>
-            <p class="text-sm text-gray-700 leading-relaxed">${DOM.escapeHtml(result.description)}</p>
+            <p class="text-sm leading-relaxed" style="color: var(--text-primary);">${DOM.escapeHtml(result.description)}</p>
           </div>
         ` : ''}
 
@@ -491,9 +513,12 @@ function initAssistantSection(result) {
   const sessionId = 'session-' + Math.random().toString(36).slice(2);
   let assistantContext = null;
 
-  // Build context payload
+  // Build context payload — disease_label MUST be the raw model class label
+  // (e.g. "Tomato___Early_blight") so the knowledge-base lookup in
+  // /api/assistant/explain succeeds. result.raw_label is the canonical field
+  // returned by the backend; result.disease is the human-readable display name.
   const contextPayload = {
-    disease_label: result.class_name || result.disease,
+    disease_label: result.raw_label || result.label || result.disease,
     confidence: result.confidence,
     crop: result.crop,
     severity: result.severity,
@@ -503,7 +528,11 @@ function initAssistantSection(result) {
 
   async function loadExplanation() {
     if (!explanationEl) return;
-    explanationEl.innerHTML = '<span class="text-emerald-300 animate-pulse">Consulting agronomic knowledge base...</span>';
+    
+    // Show leaf loader inline
+    const loader = LeafLoader.createInline('Loading guidance...');
+    explanationEl.innerHTML = '';
+    explanationEl.appendChild(loader);
     
     try {
       const response = await API.explainAssistant({ ...contextPayload, lang: currentLang });
@@ -539,14 +568,21 @@ function initAssistantSection(result) {
     if (!message || !chatLog) return;
     appendChatMessage('user', message);
     
-    // Loading indicator
+    // Show leaf loader in chat
     const loadingDiv = document.createElement('div');
-    loadingDiv.className = 'p-3 bg-emerald-800/40 rounded-lg text-sm text-emerald-200 mr-6 animate-pulse';
-    loadingDiv.innerHTML = '<span class="text-xs font-semibold text-emerald-300 block mb-1">AgriSmart AI Assistant:</span> Processing answer...';
+    loadingDiv.className = 'p-3 bg-emerald-800/40 rounded-lg text-sm text-emerald-200 mr-6';
+    loadingDiv.dataset.loadingMsg = 'true';
+    const loader = LeafLoader.createInline('Processing answer...');
+    loader.querySelector('svg').classList.add('w-4', 'h-4');
+    loader.querySelector('span').classList.add('text-emerald-300');
+    loadingDiv.innerHTML = '<span class="text-xs font-semibold text-emerald-300 block mb-1">AgriSmart AI Assistant:</span>';
+    loadingDiv.appendChild(loader);
     chatLog.appendChild(loadingDiv);
     chatLog.scrollTop = chatLog.scrollHeight;
 
-    if (sendBtn) sendBtn.disabled = true;
+    if (sendBtn) {
+      LeafLoader.setButtonLoading(sendBtn, true);
+    }
 
     try {
       const response = await API.chatAssistant({
@@ -568,7 +604,9 @@ function initAssistantSection(result) {
       appendChatMessage('assistant', 'Sorry, I could not complete the request. Please verify your connection.');
       console.error('Chat error:', err);
     } finally {
-      if (sendBtn) sendBtn.disabled = false;
+      if (sendBtn) {
+        LeafLoader.setButtonLoading(sendBtn, false);
+      }
     }
   }
 

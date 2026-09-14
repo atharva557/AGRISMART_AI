@@ -20,7 +20,13 @@ class AppTests(unittest.TestCase):
     def test_health(self):
         response = self.client.get("/api/health")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json["status"], "ok")
+        data = response.json
+        self.assertEqual(data["status"], "ok")
+        self.assertEqual(data["service"], "agrismart")
+        # Health endpoint should also report model file availability
+        self.assertIn("models", data)
+        self.assertIn("cv_checkpoint_present", data["models"])
+        self.assertIn("crop_model_present", data["models"])
 
     def test_implemented_api_validations(self):
         # Disease predict without image returns 422
