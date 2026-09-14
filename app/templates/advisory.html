@@ -124,7 +124,7 @@
             <label>Crop coefficient
               <input name="cropCoefficient" type="number" min="0" step="0.01" value="0.80" required aria-required="true">
             </label>
-            <label>Forecast ET&sub0; mm
+            <label>Forecast ET₀ mm
               <input name="et0" type="number" min="0" step="0.1" value="5" required aria-required="true">
             </label>
             <label>Forecast rain mm
@@ -153,7 +153,7 @@
               <h2 id="module-c-title">Weather intelligence</h2>
             </div>
           </div>
-          <p>Checks a complete 24-hour Open-Meteo window for rain, heat, cold, wind, humidity, and reference ET&sub0; conditions.</p>
+          <p>Checks a complete 24-hour Open-Meteo window for rain, heat, cold, wind, humidity, and reference ET₀ conditions.</p>
           <form id="weather-form" class="input-grid" novalidate aria-label="Weather advisory inputs">
             <label>Latitude
               <input name="latitude" type="number" min="-90" max="90" step="any" value="18.5204" required aria-required="true">
@@ -210,6 +210,73 @@
         </section>
 
       </div>
+
+      <!-- Module E: Grounded GenAI Agronomist Assistant -->
+      <section class="module-card mt-8" aria-labelledby="module-e-title" id="module-e">
+        <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[#cfdbcf]">
+          <div class="module-card__heading">
+            <span class="module-letter" aria-hidden="true">E</span>
+            <div>
+              <p class="tag">Multilingual GenAI</p>
+              <h2 id="module-e-title">Conversational Agronomist Assistant</h2>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <label for="advisory-assistant-lang" class="text-xs text-[#3a4a42] font-semibold">Language:</label>
+            <select id="advisory-assistant-lang" class="bg-white border border-[#c4d0c7] text-[#15352b] text-xs rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-[#176a46] cursor-pointer">
+              <option value="en">English</option>
+              <option value="hi">हिन्दी (Hindi)</option>
+              <option value="mr">मराठी (Marathi)</option>
+              <option value="gu">ગુજરાતી (Gujarati)</option>
+              <option value="te">తెలుగు (Telugu)</option>
+              <option value="ta">தமிழ் (Tamil)</option>
+              <option value="kn">ಕನ್ನಡ (Kannada)</option>
+              <option value="bn">বাংলা (Bengali)</option>
+              <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="text-sm text-[#5d6d65] mt-3">
+          Ask questions across agronomic topics including crop selection, irrigation timing, weather safeguards, and soil health.
+        </p>
+
+        <!-- Quick prompt chips -->
+        <div class="mt-4 flex flex-wrap gap-2" id="advisory-prompt-chips">
+          <button type="button" class="px-3.5 py-1.5 bg-[#e7efe7] hover:bg-[#d4e4d4] border border-[#c4d0c7] text-[#176a46] font-medium rounded-full text-xs transition-colors cursor-pointer" data-prompt="What soil parameters are most critical for high-yield tomatoes?">Tomato Soil Parameters</button>
+          <button type="button" class="px-3.5 py-1.5 bg-[#e7efe7] hover:bg-[#d4e4d4] border border-[#c4d0c7] text-[#176a46] font-medium rounded-full text-xs transition-colors cursor-pointer" data-prompt="How should I adjust irrigation when heavy rainfall is forecast?">Irrigation During Rain</button>
+          <button type="button" class="px-3.5 py-1.5 bg-[#e7efe7] hover:bg-[#d4e4d4] border border-[#c4d0c7] text-[#176a46] font-medium rounded-full text-xs transition-colors cursor-pointer" data-prompt="How does excessive nitrogen affect crop disease vulnerability?">Nitrogen & Disease Risk</button>
+        </div>
+
+        <!-- Chat Log -->
+        <div id="advisory-chat-log" class="mt-4 space-y-3 max-h-72 overflow-y-auto p-4 bg-[#edf3ed] border border-[#cfdbcf] rounded-xl">
+          <div class="p-3 bg-white border border-[#c9d7cd] rounded-lg text-sm text-[#15352b]">
+            <span class="text-xs font-bold text-[#176a46] block mb-1">AgriSmart AI Assistant:</span>
+            Welcome to the Precision Advisory Assistant. Select your language and ask any question regarding crop planning, soil moisture, weather protection, or resource efficiency.
+          </div>
+        </div>
+
+        <!-- Chat Form -->
+        <form id="advisory-chat-form" class="mt-4 flex gap-2">
+          <input
+            id="advisory-chat-input"
+            type="text"
+            placeholder="Type your agronomy or farm decision question here..."
+            class="flex-1 bg-white border border-[#c4d0c7] text-[#15352b] placeholder-[#5d6d65] text-sm rounded-lg px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#176a46]"
+            autocomplete="off"
+          />
+          <button
+            type="submit"
+            id="advisory-chat-send"
+            class="px-6 py-2.5 bg-[#176a46] hover:bg-[#10583a] text-white text-sm font-bold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer">
+            <span>Ask AI</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+            </svg>
+          </button>
+        </form>
+      </section>
+
     </div>
 
   </div>

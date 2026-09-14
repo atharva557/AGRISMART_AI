@@ -319,6 +319,24 @@ class APIService {
   async scoreSustainability(data) {
     return await this.post('/api/sustainability/score', data);
   }
+
+  /**
+   * Module 6 - GenAI Farmer Assistant Explanation
+   * @param {Object} data - Context and language
+   * @returns {Promise<Object>}
+   */
+  async explainAssistant(data) {
+    return await this.post('/api/assistant/explain', data);
+  }
+
+  /**
+   * Module 6 - GenAI Farmer Assistant Chat
+   * @param {Object} data - message, context, session_id, lang
+   * @returns {Promise<Object>}
+   */
+  async chatAssistant(data) {
+    return await this.post('/api/assistant/chat', data);
+  }
 }
 
 // Create singleton instance

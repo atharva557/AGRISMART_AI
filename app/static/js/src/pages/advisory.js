@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initModuleB(); // Irrigation advisory
   initModuleC(); // Weather advisory
   initModuleD(); // Sustainability scoring
+  initModuleE(); // GenAI Conversational Agronomist (Module 6)
 });
 
 /**
@@ -345,4 +346,128 @@ function initModuleD() {
   });
 }
 
-export { initModuleA, initModuleB, initModuleC, initModuleD };
+/**
+ * Initialize Module E: Grounded GenAI Conversational Agronomist
+ */
+function initModuleE() {
+  const langSelect = DOM.byId('advisory-assistant-lang');
+  const chatLog = DOM.byId('advisory-chat-log');
+  const chatForm = DOM.byId('advisory-chat-form');
+  const chatInput = DOM.byId('advisory-chat-input');
+  const sendBtn = DOM.byId('advisory-chat-send');
+  const chipContainer = DOM.byId('advisory-prompt-chips');
+
+  if (!chatForm || !chatInput || !chatLog) return;
+
+  let currentLang = langSelect ? langSelect.value : 'en';
+  const sessionId = 'advisory-session-' + Math.random().toString(36).slice(2);
+
+  function getActiveDashboardContext() {
+    const cropForm = DOM.byId('crop-form');
+    const irrigationForm = DOM.byId('irrigation-form');
+    const weatherForm = DOM.byId('weather-form');
+
+    return {
+      core_detection: {
+        crop: 'General Crop Farm Advisory',
+        severity: 'none',
+        description: 'Active precision agriculture dashboard session.',
+        precautions: [
+          'Maintain balanced soil NPK ratios according to local soil test reports.',
+          'Align irrigation scheduling with projected 24-hour evapotranspiration.',
+          'Monitor real-time weather alerts for frost, extreme heat, or high winds.'
+        ]
+      },
+      soil: cropForm ? {
+        nitrogen: getNumber(cropForm, 'N'),
+        phosphorus: getNumber(cropForm, 'P'),
+        potassium: getNumber(cropForm, 'K'),
+        ph: getNumber(cropForm, 'ph'),
+      } : null,
+      irrigation_recommendation_bonus_B: irrigationForm ? {
+        soil_moisture: getNumber(irrigationForm, 'moisture'),
+        field_capacity: getNumber(irrigationForm, 'fieldCapacity'),
+        forecast_et0: getNumber(irrigationForm, 'et0'),
+      } : null,
+      weather_bonus_C: weatherForm ? {
+        latitude: getNumber(weatherForm, 'latitude'),
+        longitude: getNumber(weatherForm, 'longitude'),
+      } : null,
+    };
+  }
+
+  function appendMessage(role, text) {
+    const msgDiv = document.createElement('div');
+    if (role === 'user') {
+      msgDiv.className = 'p-3 bg-emerald-700 text-white rounded-lg text-sm ml-6';
+      msgDiv.innerHTML = `<span class="text-xs font-semibold text-emerald-200 block mb-1">You:</span> ${DOM.escapeHtml(text)}`;
+    } else {
+      msgDiv.className = 'p-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-800 mr-6';
+      msgDiv.innerHTML = `<span class="text-xs font-bold text-emerald-700 block mb-1">AgriSmart AI Assistant:</span> ${DOM.escapeHtml(text).replace(/\n/g, '<br>')}`;
+    }
+    chatLog.appendChild(msgDiv);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  async function sendChatMessage(message) {
+    if (!message) return;
+    appendMessage('user', message);
+
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'p-3 bg-gray-100 border border-gray-200 rounded-lg text-sm text-gray-500 mr-6 animate-pulse';
+    loadingDiv.innerHTML = '<span class="text-xs font-bold text-emerald-700 block mb-1">AgriSmart AI Assistant:</span> Formulating grounded agronomic response...';
+    chatLog.appendChild(loadingDiv);
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+      const response = await API.chatAssistant({
+        session_id: sessionId,
+        message: message,
+        context: getActiveDashboardContext(),
+        lang: currentLang,
+      });
+
+      loadingDiv.remove();
+
+      if (response && response.reply) {
+        appendMessage('assistant', response.reply);
+      } else {
+        appendMessage('assistant', 'I could not process that question. Please try asking about crops, soil, irrigation, or weather.');
+      }
+    } catch (err) {
+      loadingDiv.remove();
+      appendMessage('assistant', 'Sorry, I encountered an issue connecting to the advisory service.');
+      console.error('Advisory assistant error:', err);
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
+  }
+
+  if (langSelect) {
+    langSelect.addEventListener('change', (e) => {
+      currentLang = e.target.value;
+    });
+  }
+
+  chatForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const msg = chatInput.value.trim();
+    if (!msg) return;
+    chatInput.value = '';
+    sendChatMessage(msg);
+  });
+
+  if (chipContainer) {
+    chipContainer.addEventListener('click', (e) => {
+      const chip = e.target.closest('button[data-prompt]');
+      if (chip && chip.dataset.prompt) {
+        sendChatMessage(chip.dataset.prompt);
+      }
+    });
+  }
+}
+
+export { initModuleA, initModuleB, initModuleC, initModuleD, initModuleE };
+

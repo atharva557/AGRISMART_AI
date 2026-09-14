@@ -86,7 +86,7 @@
 
     <div class="text-center max-w-2xl mx-auto mb-12">
       <p class="text-sm font-bold text-green-600 uppercase tracking-wider mb-2">Complete Toolset</p>
-      <h2 id="features-heading" class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Five Integrated Modules</h2>
+      <h2 id="features-heading" class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">Six Integrated Modules</h2>
       <p class="text-lg text-gray-600">
         From disease diagnosis to resource optimisation — a comprehensive suite of agricultural intelligence tools.
       </p>
@@ -203,17 +203,25 @@
         </div>
       </article>
 
-      <!-- Module E: Multilingual Assistant — NOT implemented -->
-      <article class="card opacity-60 flex flex-col" aria-labelledby="feat-assist-title" aria-disabled="true">
-        <div class="w-11 h-11 bg-gray-200 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
-          <span class="text-base font-bold text-gray-500">E</span>
+      <!-- Module E: Multilingual Assistant — Implemented on /advisory#module-e and /disease -->
+      <article class="card hover:shadow-lg transition-shadow flex flex-col" aria-labelledby="feat-assist-title">
+        <div class="w-11 h-11 bg-green-100 rounded-xl flex items-center justify-center mb-4 flex-shrink-0" aria-hidden="true">
+          <span class="text-base font-bold text-green-700">E</span>
         </div>
-        <h3 id="feat-assist-title" class="text-lg font-bold text-gray-700 mb-2">Multilingual Assistant</h3>
-        <p class="text-gray-500 mb-4 leading-relaxed flex-grow text-sm">
-          Farmer-friendly explanations and guidance in multiple languages for broader accessibility.
+        <h3 id="feat-assist-title" class="text-lg font-bold text-gray-900 mb-2">Multilingual Assistant</h3>
+        <p class="text-gray-600 mb-4 leading-relaxed flex-grow text-sm">
+          Farmer-friendly explanations and conversational guidance in 9 regional languages for broader accessibility.
         </p>
-        <div class="mt-auto">
-          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-100 border border-gray-200 rounded-full text-xs font-semibold text-gray-500">Coming soon</span>
+        <div class="flex items-center justify-between mt-auto">
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-green-50 border border-green-200 rounded-full text-xs font-semibold text-green-700">Multilingual</span>
+          <a href="/advisory#module-e"
+             class="text-green-600 font-semibold inline-flex items-center gap-1 group/cta hover:text-green-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-green-600 rounded transition-colors text-sm"
+             aria-label="Try Multilingual Assistant in the Advisory Dashboard">
+            Try it now
+            <svg class="w-4 h-4 transition-transform group-hover/cta:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </a>
         </div>
       </article>
 

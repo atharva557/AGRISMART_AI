@@ -380,9 +380,229 @@ function displayResult(response, container) {
           </div>
         ` : ''}
 
+        <!-- Module 6: Grounded GenAI Farmer Assistant Section -->
+        <div class="mt-8 pt-6 border-t border-gray-200" id="assistantSection">
+          <div class="bg-gradient-to-br from-emerald-900 to-emerald-950 rounded-xl p-6 text-white shadow-md">
+            
+            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-white/10">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-emerald-700/60 border border-emerald-500/30 flex items-center justify-center text-emerald-200">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                  </svg>
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold uppercase tracking-wider text-emerald-300">Module 6</span>
+                    <span class="text-xs px-2 py-0.5 rounded bg-emerald-800 text-emerald-200 font-medium">Grounded GenAI</span>
+                  </div>
+                  <h4 class="text-lg font-bold text-white">Farmer AI Advisory Assistant</h4>
+                </div>
+              </div>
+
+              <!-- Language Selector -->
+              <div class="flex items-center gap-2">
+                <label for="assistantLang" class="text-xs text-emerald-200 font-medium">Language:</label>
+                <select id="assistantLang" class="bg-emerald-800/90 text-white text-xs rounded-lg px-3 py-1.5 border border-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-400 cursor-pointer">
+                  <option value="en">English</option>
+                  <option value="hi">हिन्दी (Hindi)</option>
+                  <option value="mr">मराठी (Marathi)</option>
+                  <option value="gu">ગુજરાતી (Gujarati)</option>
+                  <option value="te">తెలుగు (Telugu)</option>
+                  <option value="ta">தமிழ் (Tamil)</option>
+                  <option value="kn">ಕನ್ನಡ (Kannada)</option>
+                  <option value="bn">বাংলা (Bengali)</option>
+                  <option value="pa">ਪੰਜਾਬੀ (Punjabi)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Explanation Box -->
+            <div class="mt-4 p-4 bg-white/5 border border-white/10 rounded-lg">
+              <div class="flex items-center gap-2 text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Plain Language Guidance
+              </div>
+              <div id="assistantExplanationText" class="text-sm text-gray-200 leading-relaxed">
+                Loading grounded explanation...
+              </div>
+            </div>
+
+            <!-- Quick Action Prompt Chips -->
+            <div class="mt-4">
+              <p class="text-xs text-emerald-200 font-medium mb-2">Quick Follow-up Questions:</p>
+              <div class="flex flex-wrap gap-2" id="assistantPromptChips">
+                <button type="button" class="assistant-chip px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full text-xs text-white transition-all" data-prompt="What immediate precautions should I take?">What precautions should I take?</button>
+                <button type="button" class="assistant-chip px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full text-xs text-white transition-all" data-prompt="Can this disease spread to other plants in my field?">Can this disease spread?</button>
+                <button type="button" class="assistant-chip px-3 py-1 bg-white/10 hover:bg-white/20 border border-white/15 rounded-full text-xs text-white transition-all" data-prompt="How should I manage watering and irrigation for this condition?">How should I manage watering?</button>
+              </div>
+            </div>
+
+            <!-- Chat History Log -->
+            <div id="assistantChatLog" class="mt-4 space-y-3 max-h-60 overflow-y-auto pr-1 hidden"></div>
+
+            <!-- Chat Input Form -->
+            <form id="assistantChatForm" class="mt-4 flex gap-2">
+              <input
+                id="assistantChatInput"
+                type="text"
+                placeholder="Ask any follow-up question about this diagnosis..."
+                class="flex-1 bg-white/10 border border-white/20 text-white placeholder-gray-400 text-sm rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                autocomplete="off"
+              />
+              <button
+                type="submit"
+                id="assistantSendBtn"
+                class="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer">
+                <span>Ask AI</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+                </svg>
+              </button>
+            </form>
+
+          </div>
+        </div>
+
       </div>
     </div>
   `;
+
+  // Initialize interactive assistant logic
+  initAssistantSection(result);
+}
+
+/**
+ * Initialize Module 6 Assistant Section
+ * @param {Object} result - Disease prediction result object
+ */
+function initAssistantSection(result) {
+  const langSelect = DOM.byId('assistantLang');
+  const explanationEl = DOM.byId('assistantExplanationText');
+  const chatLog = DOM.byId('assistantChatLog');
+  const chatForm = DOM.byId('assistantChatForm');
+  const chatInput = DOM.byId('assistantChatInput');
+  const sendBtn = DOM.byId('assistantSendBtn');
+  const chipContainer = DOM.byId('assistantPromptChips');
+
+  let currentLang = langSelect ? langSelect.value : 'en';
+  const sessionId = 'session-' + Math.random().toString(36).slice(2);
+  let assistantContext = null;
+
+  // Build context payload
+  const contextPayload = {
+    disease_label: result.class_name || result.disease,
+    confidence: result.confidence,
+    crop: result.crop,
+    severity: result.severity,
+    symptoms: result.symptoms,
+    precautions: result.recommendations,
+  };
+
+  async function loadExplanation() {
+    if (!explanationEl) return;
+    explanationEl.innerHTML = '<span class="text-emerald-300 animate-pulse">Consulting agronomic knowledge base...</span>';
+    
+    try {
+      const response = await API.explainAssistant({ ...contextPayload, lang: currentLang });
+      if (response && response.explanation) {
+        explanationEl.innerHTML = DOM.escapeHtml(response.explanation).replace(/\n/g, '<br>');
+        assistantContext = response.context;
+      } else {
+        explanationEl.textContent = 'Guidance is available. Ask any questions below.';
+      }
+    } catch (err) {
+      console.warn('Assistant explanation fetch failed:', err);
+      explanationEl.textContent = 'Guidance is ready. You can ask follow-up questions below.';
+    }
+  }
+
+  function appendChatMessage(role, text) {
+    if (!chatLog) return;
+    chatLog.classList.remove('hidden');
+    
+    const msgDiv = document.createElement('div');
+    if (role === 'user') {
+      msgDiv.className = 'p-3 bg-white/10 rounded-lg text-sm text-white ml-6 border border-white/10';
+      msgDiv.innerHTML = `<span class="text-xs font-semibold text-emerald-300 block mb-1">Farmer:</span> ${DOM.escapeHtml(text)}`;
+    } else {
+      msgDiv.className = 'p-3 bg-emerald-800/80 rounded-lg text-sm text-emerald-50 mr-6 border border-emerald-600/40';
+      msgDiv.innerHTML = `<span class="text-xs font-semibold text-emerald-300 block mb-1">AgriSmart AI Assistant:</span> ${DOM.escapeHtml(text).replace(/\n/g, '<br>')}`;
+    }
+    chatLog.appendChild(msgDiv);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  async function sendChatMessage(message) {
+    if (!message || !chatLog) return;
+    appendChatMessage('user', message);
+    
+    // Loading indicator
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'p-3 bg-emerald-800/40 rounded-lg text-sm text-emerald-200 mr-6 animate-pulse';
+    loadingDiv.innerHTML = '<span class="text-xs font-semibold text-emerald-300 block mb-1">AgriSmart AI Assistant:</span> Processing answer...';
+    chatLog.appendChild(loadingDiv);
+    chatLog.scrollTop = chatLog.scrollHeight;
+
+    if (sendBtn) sendBtn.disabled = true;
+
+    try {
+      const response = await API.chatAssistant({
+        session_id: sessionId,
+        message: message,
+        context: assistantContext || { core_detection: contextPayload },
+        lang: currentLang,
+      });
+
+      loadingDiv.remove();
+
+      if (response && response.reply) {
+        appendChatMessage('assistant', response.reply);
+      } else {
+        appendChatMessage('assistant', 'I could not process that request. Please try asking about diagnosis, precautions, or irrigation.');
+      }
+    } catch (err) {
+      loadingDiv.remove();
+      appendChatMessage('assistant', 'Sorry, I could not complete the request. Please verify your connection.');
+      console.error('Chat error:', err);
+    } finally {
+      if (sendBtn) sendBtn.disabled = false;
+    }
+  }
+
+  // Language Change Listener
+  if (langSelect) {
+    langSelect.addEventListener('change', (e) => {
+      currentLang = e.target.value;
+      loadExplanation();
+    });
+  }
+
+  // Chat Form Submit
+  if (chatForm && chatInput) {
+    chatForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const msg = chatInput.value.trim();
+      if (!msg) return;
+      chatInput.value = '';
+      sendChatMessage(msg);
+    });
+  }
+
+  // Quick Prompt Chips
+  if (chipContainer) {
+    chipContainer.addEventListener('click', (e) => {
+      const chip = e.target.closest('.assistant-chip');
+      if (chip && chip.dataset.prompt) {
+        sendChatMessage(chip.dataset.prompt);
+      }
+    });
+  }
+
+  // Initial explanation load
+  loadExplanation();
 }
 
 /**
@@ -409,3 +629,4 @@ function handleClear() {
 }
 
 export { handleAnalyze, handleClear };
+

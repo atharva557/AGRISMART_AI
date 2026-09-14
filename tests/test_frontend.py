@@ -37,7 +37,7 @@ def test_routes():
         status = response.status_code
         passed = status == 200
         
-        symbol = "✓" if passed else "✗"
+        symbol = "[OK]" if passed else "[FAIL]"
         color = "\033[92m" if passed else "\033[91m"
         reset = "\033[0m"
         
@@ -57,7 +57,7 @@ def test_routes():
         status = response.status_code
         passed = status == expected_status
         
-        symbol = "✓" if passed else "✗"
+        symbol = "[OK]" if passed else "[FAIL]"
         color = "\033[92m" if passed else "\033[91m"
         reset = "\033[0m"
         
@@ -68,65 +68,59 @@ def test_routes():
     
     print("\n" + "="*60)
     if all_passed:
-        print("\033[92m✓ ALL TESTS PASSED\033[0m")
+        print("\033[92m[OK] ALL ROUTES PASSED\033[0m")
         print("="*60 + "\n")
         return 0
     else:
-        print("\033[91m✗ SOME TESTS FAILED\033[0m")
+        print("\033[91m[FAIL] SOME ROUTES FAILED\033[0m")
         print("="*60 + "\n")
         return 1
 
 def test_static_files():
-    """Test that all static files exist"""
+    """Test that critical static files exist"""
     import os
     from pathlib import Path
     
     print("\n" + "="*60)
-    print("STATIC FILES CHECK")
+    print("STATIC ASSETS CHECK")
     print("="*60 + "\n")
     
     base_path = ROOT / 'app' / 'static'
     
     files = [
-        'css/base.css',
-        'css/components.css',
-        'css/pages.css',
-        'js/utils.js',
-        'js/api.js',
-        'js/ui.js',
-        'js/validation.js',
-        'js/upload.js',
-        'js/disease.js',
-        'js/app.js',
+        'css/dist/main.min.css',
+        'js/dist/main.min.js',
+        'js/dist/disease.min.js',
+        'js/dist/advisory.min.js',
     ]
     
     all_exist = True
     
-    for file_path in files:
-        full_path = base_path / file_path
+    for file in files:
+        full_path = base_path / file
         exists = full_path.exists()
         
-        symbol = "✓" if exists else "✗"
+        symbol = "[OK]" if exists else "[FAIL]"
         color = "\033[92m" if exists else "\033[91m"
         reset = "\033[0m"
         
-        print(f"{color}{symbol}{reset} {file_path}")
+        print(f"{color}{symbol}{reset} {file}")
         
         if not exists:
             all_exist = False
     
     print("\n" + "="*60)
     if all_exist:
-        print("\033[92m✓ ALL STATIC FILES FOUND\033[0m")
+        print("\033[92m[OK] ALL STATIC ASSETS FOUND\033[0m")
         print("="*60 + "\n")
         return 0
     else:
-        print("\033[91m✗ SOME STATIC FILES MISSING\033[0m")
+        print("\033[91m[FAIL] SOME STATIC ASSETS MISSING\033[0m")
         print("="*60 + "\n")
         return 1
 
 def test_templates():
-    """Test that all templates exist"""
+    """Test that all required templates exist"""
     from pathlib import Path
     
     print("\n" + "="*60)
@@ -153,7 +147,7 @@ def test_templates():
         full_path = base_path / template
         exists = full_path.exists()
         
-        symbol = "✓" if exists else "✗"
+        symbol = "[OK]" if exists else "[FAIL]"
         color = "\033[92m" if exists else "\033[91m"
         reset = "\033[0m"
         
@@ -164,11 +158,11 @@ def test_templates():
     
     print("\n" + "="*60)
     if all_exist:
-        print("\033[92m✓ ALL TEMPLATES FOUND\033[0m")
+        print("\033[92m[OK] ALL TEMPLATES FOUND\033[0m")
         print("="*60 + "\n")
         return 0
     else:
-        print("\033[91m✗ SOME TEMPLATES MISSING\033[0m")
+        print("\033[91m[FAIL] SOME TEMPLATES MISSING\033[0m")
         print("="*60 + "\n")
         return 1
 
@@ -182,14 +176,14 @@ if __name__ == '__main__':
     
     if exit_code == 0:
         print("\n\033[92m" + "="*60)
-        print("🎉 FRONTEND INTEGRATION COMPLETE - ALL CHECKS PASSED")
+        print("FRONTEND INTEGRATION COMPLETE - ALL CHECKS PASSED")
         print("="*60 + "\033[0m\n")
         print("You can now run the application:")
         print("  python run.py")
         print("\nThen visit: http://127.0.0.1:5000\n")
     else:
         print("\n\033[91m" + "="*60)
-        print("⚠️  SOME CHECKS FAILED - PLEASE REVIEW ABOVE")
+        print("SOME CHECKS FAILED - PLEASE REVIEW ABOVE")
         print("="*60 + "\033[0m\n")
     
     sys.exit(exit_code)

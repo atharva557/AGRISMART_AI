@@ -36,7 +36,9 @@ def measurement(value, unit, kind="assumed"):
 class BonusServiceTests(unittest.TestCase):
     @unittest.skipUnless(MODEL_PATH.is_file(), "Local crop model artifact is not installed")
     def test_a_returns_ranked_experimental_candidates(self):
-        result = recommend_crops(deepcopy(CASE_BY_NAME["A verified source row"]))
+        payload = deepcopy(CASE_BY_NAME["A verified source row"])
+        payload["inputs"].pop("row_id", None)
+        result = recommend_crops(payload)
         self.assertEqual(result["status"], "EXPERIMENTAL")
         self.assertEqual(len(result["result"]["candidates"]), 3)
         self.assertGreaterEqual(result["result"]["candidates"][0]["model_score"], result["result"]["candidates"][1]["model_score"])
