@@ -1,19 +1,22 @@
-"""Mandatory core API. Connect trained inference here when available."""
+"""Disease detection API endpoint integrating trained CV model and agronomic KB."""
 import os
 import os.path
+import logging
 
 from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 
-from .responses import not_implemented
-from model.predict import predict as get_prediction
+from model.predict import predict_detailed
+from services.disease_info import DISEASE_KB
+
+logger = logging.getLogger(__name__)
 
 bp = Blueprint("disease", __name__)
 
 
 @bp.post("/api/disease/predict")
 def predict():
-    """Disease prediction endpoint with image upload handling"""
+    """Disease prediction endpoint with image upload and deep inference."""
     
     # Check if file is present
     if 'image' not in request.files:
@@ -34,7 +37,7 @@ def predict():
     
     # Validate file type
     allowed_extensions = {'png', 'jpg', 'jpeg'}
-    if not '.' in file.filename or \
+    if '.' not in file.filename or \
        file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
         return jsonify({
             "status": "INVALID_INPUT",
@@ -44,52 +47,78 @@ def predict():
     
     # Save file temporarily
     filename = secure_filename(file.filename)
-    upload_folder = current_app.config['UPLOAD_FOLDER']
+    upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
     os.makedirs(upload_folder, exist_ok=True)
     filepath = os.path.join(upload_folder, filename)
     
     try:
         file.save(filepath)
         
-        # Call prediction (when implemented)
-        try:
-            prediction_result = get_prediction(filepath)
+        # Run neural network inference
+        diagnostics = predict_detailed(filepath)
+        
+        # Clean up uploaded temporary file
+        if os.path.exists(filepath):
+            os.remove(filepath)
             
-            # Clean up uploaded file
-            if os.path.exists(filepath):
-                os.remove(filepath)
-            
-            return jsonify({
-                "status": "OK",
-                "result": {
-                    "disease_name": prediction_result,
-                    "confidence": 0.85,  # Placeholder
-                    "recommendations": [
-                        "Consult with a local agricultural expert for confirmation",
-                        "Monitor affected plants closely",
-                        "Isolate infected plants if possible"
-                    ],
-                    "description": f"Detected: {prediction_result}"
-                },
-                "limitations": [
-                    "Model confidence threshold is 75%",
-                    "Consult expert for low confidence predictions",
-                    "Lab-trained model may have reduced accuracy on field photos"
-                ]
-            }), 200
-            
-        except NotImplementedError as e:
-            # Model not yet implemented
-            if os.path.exists(filepath):
-                os.remove(filepath)
-            return jsonify({
-                "status": "DATA_UNAVAILABLE",
-                "message": "Disease detection model is not yet implemented. The image upload works, but prediction is pending integration.",
-                "result": None,
-                "error": str(e)
-            }), 503
-            
+        label = diagnostics["label"]
+        confidence = diagnostics["confidence"]
+        crop = diagnostics["crop"]
+        disease = diagnostics["disease"]
+        
+        # Lookup verified knowledge base info
+        kb_entry = DISEASE_KB.get(label, {})
+        
+        # Format human-readable title
+        if "healthy" in label.lower():
+            display_title = f"{crop} — Healthy Foliage"
+            description = kb_entry.get("description", f"The leaf appears healthy with no visible signs of pathogen infection.")
+            recommendations = kb_entry.get("precautions", [
+                "Maintain standard watering and nutrient schedules.",
+                "Continue routine scouting for early pest or fungal signs.",
+                "Ensure good air circulation between crop beds."
+            ])
+            symptoms = ["Normal, green, uniform leaf tissue", "No visible necrotic spots or mildew"]
+            severity = "none"
+        else:
+            display_title = f"{crop} — {disease}"
+            description = kb_entry.get("description", f"Detected symptoms characteristic of {disease} on {crop}.")
+            recommendations = kb_entry.get("precautions", [
+                "Consult with a local agricultural extension officer for field confirmation.",
+                "Isolate or prune visibly infected plant parts to prevent spreading.",
+                "Avoid overhead irrigation to reduce foliage wetness."
+            ])
+            symptoms = kb_entry.get("symptoms", ["Visible discoloration or lesions on leaf surface."])
+            severity = kb_entry.get("severity", "moderate")
+
+        return jsonify({
+            "status": "OK",
+            "result": {
+                "disease_name": display_title,
+                "raw_label": label,
+                "crop": crop,
+                "disease": disease,
+                "confidence": confidence,
+                "confidence_percentage": diagnostics["confidence_percentage"],
+                "is_confident": diagnostics["is_confident"],
+                "confidence_threshold": diagnostics["confidence_threshold"],
+                "latency_ms": diagnostics["latency_ms"],
+                "model_version": diagnostics["model_version"],
+                "description": description,
+                "symptoms": symptoms,
+                "severity": severity,
+                "recommendations": recommendations,
+                "top_candidates": diagnostics["top_candidates"]
+            },
+            "limitations": [
+                "Model confidence threshold is 75%.",
+                "Consult local agronomists for critical field decisions.",
+                "In-field lighting and dirt may affect accuracy compared to lab benchmarks."
+            ]
+        }), 200
+        
     except Exception as e:
+        logger.error(f"Prediction failed: {e}", exc_info=True)
         # Clean up on error
         if os.path.exists(filepath):
             os.remove(filepath)

@@ -1,4 +1,4 @@
-﻿# Credentials and local configuration
+# Credentials and local configuration
 .env
 .env.*
 !.env.example
@@ -27,15 +27,12 @@ build/
 # Datasets, local media uploads, and test image folders
 data/*
 !data/README.md
-!data/.gitkeep
 uploads/*
-!uploads/.gitkeep
 model/weights/*
-!model/weights/.gitkeep
+!model/weights/cv/
+!model/weights/cv/*.pkl
 !model/weights/crop_recommendation/
 !model/weights/crop_recommendation/crop_recommendation.joblib
-notebooks/cv_model_notebooks/test_images/
-notebooks/cv_model_notebooks/test_images_external_datasets/
 tests/sample_leaf.jpg
 
 # Generated outputs
