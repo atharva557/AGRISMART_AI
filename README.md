@@ -1,12 +1,49 @@
 # AgriSmart AI — Smart Agricultural Diagnostics & Precision Advisory Platform
 
+## Judge entry point and current evidence
+
+**This is a working prototype.** Historical PlantVillage validation: **0.9969 macro-F1 / 99.85% accuracy** on 10,861 images. Historical field sample: **11/34 correct (32.4%)**. Neither is the organizers' held-out score. Current compressed checkpoints and EXIF-orientation handling have not received a new full benchmark.
+
+**Still pending:** exact organizer labels/split and baseline, official field results, team-confirmed originality declaration, and the recorded demo URL. The model currently has 38 PlantVillage classes; compatibility with the final kickoff subset is unverified.
+
+- [Concise model report](report/model_report.md) and [historical detailed evidence](report/historical_validation_report.md).
+- [Submission checklist](docs/SUBMISSION_CHECKLIST.md), [originality draft and references](docs/ORIGINALITY.md), [four-minute demo script](docs/JUDGE_DEMO.md).
+- **Demo URL:** pending recording. **Deployed app:** not supplied; run locally using the setup below.
+
+### New farmer workflow
+
+Start at `/disease`: choose an optional crop, upload one leaf photo and optionally add a live forecast or explicitly simulated weather example. Very small or nearly blank/dark/overexposed photos receive retake steps. Possible blur is advisory. A low model score or selected-crop mismatch withholds disease-specific guidance in both the result and assistant. Weather source, time window and simulation status travel with the same scan into the assistant.
+
+These quality rules are experimental: they do not detect unrelated objects, calibrate confidence or establish improved field accuracy. Weather cannot establish irrigation volume or confirm a disease. Irrigation and sustainability inputs remain separate, explicit demonstrations. No sensor-feed integration (F) or continuous autonomous agent (G) is claimed.
+
+### One prediction and evaluation
+
+From the repository root, using an existing permitted photograph (sample images are local and absent from fresh clones):
+
+```powershell
+python -m model.predict --image "C:\path\to\leaf.jpg"
+```
+
+Default stdout is only the raw class label; `--details` adds diagnostics. Python interface: `from model.predict import predict; label = predict(image_path)`. Web uncertainty policy does not remove samples from the classifier's mandatory label output.
+
+```powershell
+# Loads saved weights; without organizer labels, reports pending and exits 2.
+python -m model.submission_check
+# When the exact organizer list is available:
+python -m model.submission_check --labels "C:\path\to\organizer_classes.json"
+# User-run independent local evaluation; never trains or executes notebooks:
+python -m model.evaluate --manifest data/field_eval/manifest.csv --labels model/classes.json --dataset-name "Independent field development set" --output outputs/field_eval/run-01
+```
+
+See [evaluation protocol](docs/FIELD_EVALUATION.md) for the manifest contract, per-class metrics, confusion matrix and confidence-coverage analysis. Do not rename or silently discard classes to hide organizer incompatibility. Never train or tune on the organizers' held-out set.
+
 > **Smart India Hackathon (SIH 2026)** | AI-Powered Multiclass Crop Pathology Detection & Precision Farming Advisory System
 
 ---
 
 ## 1. Executive Overview
 
-**AgriSmart AI** is an enterprise-grade precision agriculture platform designed to provide farmers and agronomists with immediate, data-driven diagnostic insights. By integrating high-resolution Computer Vision, machine learning agronomic engines, real-time meteorological intelligence, and a grounded multilingual conversational AI assistant, AgriSmart AI translates complex agronomic datasets into actionable on-field recommendations.
+**AgriSmart AI** is a hackathon prototype combining crop-image classification, experimental advisory tools and a contextual multilingual assistant. The main unresolved challenge is generalization from laboratory leaves to field photographs.
 
 ---
 
@@ -37,8 +74,8 @@
 ### Module 1: Computer Vision Plant Pathology Diagnostic Engine
 - **Primary Architecture:** High-precision **ConvNeXt-Tiny (384px)** deep learning model achieving **99.85% validation accuracy** and **0.9969 Macro-F1** across 38 crop pathology categories (14 distinct crops and healthy foliage).
 - **Automated Fallback:** ResNet-18 (224px) baseline model ready for resource-constrained deployments.
-- **Safety Confidence Floor:** A 75% confidence threshold flags unconfirmed or ambiguous diagnoses, prompting users to verify low-confidence predictions with local agricultural authorities.
-- **Agronomic Knowledge Base:** Pairs every prediction with verified disease descriptions, visible symptoms, severity indices, and organic/chemical treatments from a curated pathology repository (`DISEASE_KB`).
+- **Uncertainty policy:** A 75% model-score threshold withholds disease-specific guidance for uncertain predictions. This threshold is not a safety guarantee; incorrect high-score predictions remain possible.
+- **Agronomic Knowledge Base:** Provides reference descriptions, symptoms and precautions from `DISEASE_KB`; these are not symptoms or severity measured from the uploaded image. Independent source validation remains pending.
 
 ### Module 2: Precision Crop Recommendation Engine
 - **Multi-Nutrient Analysis:** Evaluates soil Nitrogen (N), Phosphorus (P), Potassium (K), pH, rainfall, temperature, and humidity.
@@ -53,11 +90,11 @@
 - **Automated Risk Alerts:** Evaluates field risks including frost conditions, heat stress, heavy rainfall, high wind velocities, and excessive humidity.
 
 ### Module 5: Sustainability & Resource Optimization
-- **Resource Efficiency Benchmarks:** Analyzes water, electricity, and nitrogen usage against standardized regional baselines.
+- **Resource Comparison:** Compares supplied baseline/current water, electricity and nitrogen totals per hectare. Demo baselines are assumptions, not verified regional standards.
 - **Sustainability Index:** Computes a composite efficiency score (0–100) with a yield-retention safeguard.
 
 ### Module 6: Multilingual GenAI Farmer Assistant
-- **Grounded Agricultural AI:** Powered by Google Gemini LLM grounded directly on our validated pathology database to eliminate hallucinations.
+- **Contextual Agricultural AI:** Google Gemini receives the scan and reference facts, with template fallback. This reduces reliance on free-form generation but does not eliminate factual errors; disease-reference validation remains incomplete.
 - **Regional Accessibility:** Supports multi-turn conversational guidance in **English, Hindi, Marathi, Telugu, Tamil, Gujarati, and Bengali**.
 
 ---
@@ -137,7 +174,7 @@ Access the application in your browser at: **`http://127.0.0.1:5000`**
 
 ## 6. Model Benchmarks (Plant Pathology Classifier)
 
-Historical reported results on **10,861 validation samples** (PlantVillage 80/20 train-val split). These scores have not been independently revalidated for the current FP16-compressed checkpoints and do not establish field-photo accuracy:
+Historical reported results on **10,861 validation samples** (PlantVillage 80/20 train-val split). These scores have not been independently revalidated for the current FP16-compressed checkpoints or EXIF-orientation handling and do not establish field-photo accuracy:
 
 | Model Architecture | Input Resolution | Macro-F1 | Top-1 Accuracy | Avg GPU Latency | Checkpoint Location |
 | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -160,7 +197,7 @@ AGRISMART_AI/
 │   ├── static/                 # Static CSS, JS, images, and compiled dist bundles
 │   └── templates/              # Jinja2 HTML templates & reusable UI components
 ├── model/                      # ML Inference & Checkpoints
-│   ├── classes.json            # 38 official crop pathology class labels
+│   ├── classes.json            # 38 local model labels; organizer alignment pending
 │   ├── model_loader.py         # Singleton cached PyTorch model loader
 │   ├── predict.py              # CLI & Python inference engine
 │   └── weights/                # Serialized model checkpoints
@@ -196,8 +233,9 @@ Run the verification suites from the project root:
 # Run frontend route & template verification
 python tests/test_frontend.py
 
-# Run unit tests
-python -m unittest discover -s tests
+# Run all Python tests (including pytest-style workflow and metric tests)
+python -m pytest -q tests
+npm run test:frontend
 ```
 
 ---
@@ -252,6 +290,7 @@ A structured overview of all research notebooks, evaluation scripts, and enginee
 
 ## 10. License & Attribution
 
-- **Datasets:** PlantVillage (CC0 / Public Domain), PlantDoc (MIT Open Research).
-- **Weather Provider:** Open-Meteo API (Open Database License).
-- **License:** MIT License. Built for Smart India Hackathon (SIH 2026).
+- **Core datasets:** PlantVillage and historical PlantDoc samples. Exact distributions, source versions, licenses and kickoff split correspondence need team confirmation.
+- **Bonus datasets:** source identifiers, versions, hashes and reported licensing are in [data instructions](data/README.md), [bonus source manifest](report/bonus_modules_sources.json) and [irrigation manifest](report/irrigation_dataset_manifest.json).
+- **Weather Provider:** Open-Meteo Forecast API; retain provider attribution and review applicable use conditions.
+- **Originality and reuse:** [Team-review declaration draft](docs/ORIGINALITY.md). AI coding assistance was used; the reference inventory requires team completion before submission.
