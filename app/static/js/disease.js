@@ -98,6 +98,9 @@ const DiseaseDetection = {
     // Clear preview
     FileUpload.clearPreview(previewContainer);
 
+    const resultContainer = Utils.byId('analysisResult') || Utils.byId('result');
+    if (resultContainer) resultContainer.innerHTML = '';
+
     // Clear errors
     if (errorContainer) errorContainer.innerHTML = '';
 
@@ -218,41 +221,86 @@ const DiseaseDetection = {
     const confidenceClass = this.getConfidenceClass(confidence);
     const confidenceLabel = this.getConfidenceLabel(confidence);
 
+    const isHealthy = (result.disease || '').toLowerCase() === 'healthy';
+    const severity = (result.severity || 'moderate').toLowerCase();
+    const symptoms = Array.isArray(result.symptoms) ? result.symptoms : (result.symptoms ? [result.symptoms] : []);
+    const recommendations = Array.isArray(result.recommendations) ? result.recommendations : (result.recommendations ? [result.recommendations] : []);
+    const topCandidates = Array.isArray(result.top_candidates) ? result.top_candidates : [];
+
     container.innerHTML = `
       <div class="max-w-4xl mx-auto">
         <!-- Image Preview -->
-        <div class="card mb-6">
-          <img src="${image}" alt="Analyzed crop" class="max-w-full max-h-96 mx-auto rounded-lg">
+        <div class="card mb-6 overflow-hidden">
+          <img src="${image}" alt="Analyzed crop" class="max-w-full max-h-96 mx-auto rounded-lg shadow-sm">
         </div>
 
         <!-- Results Card -->
-        <div class="card">
-          <div class="flex items-start justify-between mb-4">
+        <div class="card space-y-6">
+          <div class="flex flex-wrap items-start justify-between gap-4 pb-4 border-b border-gray-200">
             <div>
-              <h2 class="text-3xl font-bold text-gray-900 mb-2">${Utils.escapeHtml(result.disease_name || 'Unknown')}</h2>
-              <p class="text-sm text-gray-500">Analyzed ${Utils.formatDate(timestamp, 'long')}</p>
+              <p class="text-xs font-bold text-green-700 uppercase tracking-wider mb-1">
+                ${isHealthy ? 'Healthy Foliage Assessment' : 'Pathology Diagnostic Report'}
+              </p>
+              <h2 class="text-3xl font-extrabold text-gray-900">${Utils.escapeHtml(result.crop || 'Plant')}: <span class="text-green-700">${Utils.escapeHtml(result.disease || 'Detected Condition')}</span></h2>
+              <p class="text-sm text-gray-500 mt-1">Analyzed ${Utils.formatDate(timestamp, 'long')}</p>
             </div>
-            <div class="confidence-badge ${confidenceClass}">
+            <div class="confidence-badge ${confidenceClass} text-base px-4 py-2 font-bold">
               ${confidencePercent}% ${confidenceLabel}
             </div>
           </div>
 
+          <!-- Structured Quick Stats Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="p-3 bg-gray-50 border border-gray-200 rounded-xl">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Crop Species</p>
+              <p class="text-base font-bold text-gray-900 mt-0.5">${Utils.escapeHtml(result.crop || 'N/A')}</p>
+            </div>
+            <div class="p-3 bg-gray-50 border border-gray-200 rounded-xl">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Identified Condition</p>
+              <p class="text-base font-bold ${isHealthy ? 'text-emerald-700' : 'text-rose-700'} mt-0.5">${Utils.escapeHtml(result.disease || 'None')}</p>
+            </div>
+            <div class="p-3 bg-gray-50 border border-gray-200 rounded-xl">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Severity Level</p>
+              <p class="text-base font-bold text-gray-900 uppercase mt-0.5">${Utils.escapeHtml(severity)}</p>
+            </div>
+            <div class="p-3 bg-gray-50 border border-gray-200 rounded-xl">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Reliability</p>
+              <p class="text-base font-bold text-emerald-700 mt-0.5">${confidencePercent}%</p>
+            </div>
+          </div>
+
           ${confidence < 0.75 ? `
-            <div class="alert alert-warning mb-4">
+            <div class="alert alert-warning">
               <svg class="alert-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
               </svg>
               <div class="alert-content">
                 <div class="alert-title">Low Confidence Prediction</div>
-                <p class="alert-message">This prediction has low confidence. Please consult a local agricultural expert for confirmation.</p>
+                <p class="alert-message">This prediction is below 75% confidence. Please consult a local agricultural expert for verification.</p>
               </div>
             </div>
           ` : ''}
 
           ${result.description ? `
-            <div class="mb-6">
-              <h3 class="text-lg font-semibold text-gray-900 mb-2">Description</h3>
-              <p class="text-gray-700 leading-relaxed">${Utils.escapeHtml(result.description)}</p>
+            <div class="p-4 bg-green-50/50 border border-green-200 rounded-xl">
+              <h3 class="text-sm font-bold text-green-900 uppercase tracking-wider mb-1">About this Condition</h3>
+              <p class="text-gray-700 leading-relaxed text-sm">${Utils.escapeHtml(result.description)}</p>
+            </div>
+          ` : ''}
+
+          ${symptoms.length > 0 ? `
+            <div>
+              <h3 class="text-base font-bold text-gray-900 mb-2.5">Visible Symptoms</h3>
+              <ul class="grid sm:grid-cols-2 gap-2 text-sm">
+                ${symptoms.map(s => `
+                  <li class="flex items-start gap-2 p-2.5 bg-gray-50 rounded-lg text-gray-700">
+                    <svg class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                    <span>${Utils.escapeHtml(s)}</span>
+                  </li>
+                `).join('')}
+              </ul>
             </div>
           ` : ''}
 
