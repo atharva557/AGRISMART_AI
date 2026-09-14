@@ -1,13 +1,13 @@
 """Disease detection API endpoint integrating trained CV model and agronomic KB."""
+import logging
 import os
 import os.path
-import logging
+import uuid
 
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, current_app, jsonify, request
 from werkzeug.utils import secure_filename
 
-from model.predict import predict_detailed
-from services.disease_info import DISEASE_KB
+from services.disease_info import get_disease_info
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +45,20 @@ def predict():
             "result": None
         }), 422
     
-    # Save file temporarily
-    filename = secure_filename(file.filename)
+    # Lazy import of deep learning inference module
+    try:
+        from model.predict import predict_detailed
+    except ImportError as e:
+        logger.error(f"Inference dependency missing: {e}")
+        return jsonify({
+            "status": "ERROR",
+            "message": f"Inference engine dependencies (torch, torchvision, timm, Pillow) not found: {e}. Run 'pip install -r requirements.txt'.",
+            "result": None
+        }), 503
+
+    # Save file temporarily with UUID prefix to prevent collisions
+    safe_name = secure_filename(file.filename)
+    filename = f"{uuid.uuid4().hex}_{safe_name}"
     upload_folder = current_app.config.get('UPLOAD_FOLDER', 'uploads')
     os.makedirs(upload_folder, exist_ok=True)
     filepath = os.path.join(upload_folder, filename)
@@ -67,18 +79,18 @@ def predict():
         disease = diagnostics["disease"]
         
         # Lookup verified knowledge base info
-        kb_entry = DISEASE_KB.get(label, {})
+        kb_entry = get_disease_info(label)
         
         # Format human-readable title
         if "healthy" in label.lower():
             display_title = f"{crop} — Healthy Foliage"
-            description = kb_entry.get("description", f"The leaf appears healthy with no visible signs of pathogen infection.")
+            description = kb_entry.get("description", "The leaf appears healthy with no visible signs of pathogen infection.")
             recommendations = kb_entry.get("precautions", [
                 "Maintain standard watering and nutrient schedules.",
                 "Continue routine scouting for early pest or fungal signs.",
                 "Ensure good air circulation between crop beds."
             ])
-            symptoms = ["Normal, green, uniform leaf tissue", "No visible necrotic spots or mildew"]
+            symptoms = kb_entry.get("symptoms", ["Normal green coloration", "No visible necrotic spots or mildew"])
             severity = "none"
         else:
             display_title = f"{crop} — {disease}"
@@ -121,7 +133,10 @@ def predict():
         logger.error(f"Prediction failed: {e}", exc_info=True)
         # Clean up on error
         if os.path.exists(filepath):
-            os.remove(filepath)
+            try:
+                os.remove(filepath)
+            except OSError:
+                pass
         return jsonify({
             "status": "ERROR",
             "message": f"Prediction failed: {str(e)}",

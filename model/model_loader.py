@@ -1,4 +1,5 @@
 """Model loading and caching manager for AgriSmart AI."""
+import io
 import json
 import logging
 import os
@@ -32,6 +33,14 @@ _CACHED_BUNDLE: Optional[Dict[str, Any]] = None
 _ACTIVE_VERSION: Optional[str] = None
 
 
+class CPU_Unpickler(pickle.Unpickler):
+    """Custom unpickler that safely redirects CUDA tensor storage to CPU."""
+    def find_class(self, module, name):
+        if module == "torch.storage" and name == "_load_from_bytes":
+            return lambda b: torch.load(io.BytesIO(b), map_location="cpu", weights_only=False)
+        return super().find_class(module, name)
+
+
 def load_classes(path=CLASSES_PATH):
     """Load and validate the official class labels list."""
     classes = json.loads(Path(path).read_text(encoding="utf-8"))
@@ -47,7 +56,14 @@ def load_classes(path=CLASSES_PATH):
 def _load_model_from_bundle(pkl_path: Path) -> Tuple[nn.Module, Dict[str, Any]]:
     """Instantiate the PyTorch architecture and load state dict from bundle."""
     with open(pkl_path, "rb") as f:
-        bundle = pickle.load(f)
+        if torch.cuda.is_available():
+            try:
+                bundle = pickle.load(f)
+            except Exception:
+                f.seek(0)
+                bundle = CPU_Unpickler(f).load()
+        else:
+            bundle = CPU_Unpickler(f).load()
 
     arch = bundle["architecture"].lower()
     num_classes = bundle.get("num_classes", len(bundle.get("class_names", [])))
