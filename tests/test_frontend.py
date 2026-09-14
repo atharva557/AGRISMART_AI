@@ -4,6 +4,7 @@ Verify all routes and pages are working correctly
 """
 
 import sys
+from html.parser import HTMLParser
 from pathlib import Path
 
 # Add project root to sys.path
@@ -176,6 +177,44 @@ def test_static_files():
 
 def test_templates():
     assert check_templates() == 0, 'Required templates are missing'
+
+
+def test_navigation_is_ready_without_javascript():
+    """Direct loads must include the correct desktop/mobile active links in HTML."""
+    class HeaderParser(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.in_header = False
+            self.headers = 0
+            self.links = []
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == 'header' and attrs.get('id') == 'site-header':
+                self.in_header = True
+                self.headers += 1
+            if self.in_header and tag == 'a' and 'data-nav-link' in attrs:
+                self.links.append(attrs)
+
+        def handle_endtag(self, tag):
+            if tag == 'header':
+                self.in_header = False
+
+    client = create_app({'TESTING': True}).test_client()
+    navigation = ['/', '/disease', '/advisory', '/about']
+    for path, expected in [
+        ('/', '/'), ('/disease', '/disease'), ('/advisory', '/advisory'),
+        ('/about', '/about'), ('/disease/result', '/disease'), ('/nonexistent', None),
+    ]:
+        parser = HeaderParser()
+        with client.get(path) as response:
+            parser.feed(response.get_data(as_text=True))
+        assert parser.headers == 1, path
+        assert [link['href'] for link in parser.links] == navigation * 2, path
+        active = [link for link in parser.links if 'active' in link.get('class', '').split()]
+        assert [link['href'] for link in active] == ([expected] * 2 if expected else []), path
+        assert all(link.get('aria-current') == 'page' for link in active), path
+        assert all('aria-current' not in link for link in parser.links if link not in active), path
 
 
 if __name__ == '__main__':

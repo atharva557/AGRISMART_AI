@@ -8,9 +8,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
 /* ============================================================
    DESIGN TOKEN SYSTEM — Light Mode (default)
    ============================================================ */
@@ -141,6 +138,8 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scroll-behavior: smooth;
+    /* Reserve scrollbar space before page content makes the document scrollable. */
+    scrollbar-gutter: stable;
     /* Apply theme transition only after initial paint */
     &.theme-loaded {
       transition: background-color var(--transition-theme), color var(--transition-theme);
@@ -179,13 +178,25 @@
 
   /* ── Header ─────────────────────────────────────────────── */
   .site-header {
+    /* Canonical navbar palette: retain the existing dark-green design in both page themes. */
+    --surface: #1a2a22;
+    --surface-alt: #1f3328;
+    --text-primary: #e8f0eb;
+    --text-secondary: #a8bdb1;
+    --text-muted: #7a9488;
+    --primary: #3db87a;
+    --primary-subtle: #1a3328;
+    --primary-border: #2d5c42;
+    --border: #2d4438;
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.30);
+    color-scheme: dark;
+    color: var(--text-primary);
     background-color: var(--surface);
     border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow-sm);
     position: sticky;
     top: 0;
     z-index: 50;
-    transition: background-color var(--transition-theme), border-color var(--transition-theme);
   }
 
   .nav-link {
@@ -250,14 +261,16 @@
     z-index: 1;
   }
 
-  /* Active slot — highlighted with primary-subtle + border */
-  .theme-toggle__option.active {
+  /* Select the correct slot directly from the theme resolved in <head>. */
+  html:not(.dark) #theme-opt-light,
+  html.dark #theme-opt-dark {
     background-color: var(--primary-subtle);
     box-shadow: 0 0 0 1px var(--primary-border);
   }
 
   /* Inactive slot — transparent */
-  .theme-toggle__option:not(.active) {
+  html:not(.dark) #theme-opt-dark,
+  html.dark #theme-opt-light {
     background-color: transparent;
     opacity: 0.45;
   }
@@ -930,20 +943,11 @@
     to   { transform: rotate(360deg); }
   }}
 
-/* ============================================================
-   HEADER ANIMATION
-   ============================================================ */
-@keyframes slideFromLeft {
-  from { opacity: 0; transform: translateX(-18px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.nav-brand-slide {
-  animation: slideFromLeft 0.40s cubic-bezier(0.22, 1, 0.36, 1) both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .nav-brand-slide { animation: none; }
+/* Initial rendering must not animate from browser defaults or the wrong theme. */
+html:not(.theme-loaded) *,
+html:not(.theme-loaded) *::before,
+html:not(.theme-loaded) *::after {
+  transition: none !important;
 }
 
 /* ============================================================
@@ -987,7 +991,6 @@ html.dark article.card {
 }
 
 /* Header specific */
-html.dark .site-header,
 html.dark header.bg-white {
   background-color: var(--surface) !important;
   border-color: var(--border) !important;

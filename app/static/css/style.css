@@ -5,7 +5,7 @@
 
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; }
-button, input { font: inherit; }
+:where(main) button, :where(main) input { font: inherit; }
 
 /* ── Layout container ───────────────────────────────────────── */
 .hero { padding: clamp(52px,8vw,108px) 24px 66px; color: white; position: relative;
@@ -49,26 +49,26 @@ main { padding: 44px 24px 72px; }
 /* ── Form inputs ────────────────────────────────────────────── */
 .input-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 13px; }
 
-label { display: grid; gap: 6px; color: var(--text-secondary); font-size: .8rem; font-weight: 600; }
+:where(main) label { display: grid; gap: 6px; color: var(--text-secondary); font-size: .8rem; font-weight: 600; }
 
-input { width: 100%; padding: 11px 12px; border: 1px solid var(--border);
+:where(main) input { width: 100%; padding: 11px 12px; border: 1px solid var(--border);
   border-radius: 8px; color: var(--text-primary); background: var(--surface);
   transition: border-color 150ms ease-in-out, box-shadow 150ms ease-in-out,
               background-color 200ms ease-in-out, color 200ms ease-in-out; }
-input::placeholder { color: var(--text-muted); }
-input:hover:not(:focus) { border-color: var(--border-strong); }
-input:focus { outline: none; border-color: var(--primary);
+:where(main) input::placeholder { color: var(--text-muted); }
+:where(main) input:hover:not(:focus) { border-color: var(--border-strong); }
+:where(main) input:focus { outline: none; border-color: var(--primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
-input:focus-visible { outline: none; border-color: var(--primary);
+:where(main) input:focus-visible { outline: none; border-color: var(--primary);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 18%, transparent); }
 
 /* ── Buttons ────────────────────────────────────────────────── */
-button { grid-column: 1 / -1; padding: 13px 18px; border: 0; border-radius: 8px;
+:where(main) button { grid-column: 1 / -1; padding: 13px 18px; border: 0; border-radius: 8px;
   font-weight: 700; color: white; background: var(--primary); cursor: pointer;
   transition: background-color 150ms ease-in-out; }
-button:hover { background: var(--primary-hover); }
-button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-button:active { background: var(--primary-active); }
+:where(main) button:hover { background: var(--primary-hover); }
+:where(main) button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+:where(main) button:active { background: var(--primary-active); }
 
 .actions { grid-column: 1 / -1; display: flex; gap: 10px; }
 .actions button { flex: 1; }
