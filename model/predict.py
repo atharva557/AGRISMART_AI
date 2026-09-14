@@ -5,7 +5,7 @@ import time
 from pathlib import Path
 from typing import Dict, Any, Union
 
-from PIL import Image
+from PIL import Image, ImageOps
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
@@ -42,11 +42,11 @@ def predict_detailed(image_input: Union[str, Path, Image.Image], top_k: int = 3)
         with Image.open(img_path) as source:
             if source.width * source.height > 50_000_000:
                 raise ValueError("Image exceeds the 50 megapixel limit")
-            image = source.convert("RGB")
+            image = ImageOps.exif_transpose(source).convert("RGB")
     elif isinstance(image_input, Image.Image):
         if image_input.width * image_input.height > 50_000_000:
             raise ValueError("Image exceeds the 50 megapixel limit")
-        image = image_input.convert("RGB")
+        image = ImageOps.exif_transpose(image_input).convert("RGB")
     else:
         raise ValueError("image_input must be a filepath string, Path, or PIL.Image instance")
 
@@ -118,10 +118,14 @@ def main():
     parser = argparse.ArgumentParser(description="Predict crop disease from an image")
     parser.add_argument("--image", required=True, help="Path to leaf image file")
     parser.add_argument("--top_k", type=int, default=3, help="Number of top candidates to display")
+    parser.add_argument("--details", action="store_true", help="Print diagnostics; default stdout is only the class label")
     args = parser.parse_args()
 
     try:
         diagnostics = predict_detailed(args.image, top_k=args.top_k)
+        if not args.details:
+            print(diagnostics["label"])
+            return 0
         print(f"\nPredicted Class: {diagnostics['label']}")
         print(f"Confidence:      {diagnostics['confidence_percentage']} (Threshold: {diagnostics['confidence_threshold'] * 100:.0f}%)")
         print(f"Latency:         {diagnostics['latency_ms']} ms ({diagnostics['device']})")

@@ -105,6 +105,7 @@ def _load_model_from_bundle(pkl_path: Path) -> Tuple[nn.Module, Dict[str, Any]]:
     model.load_state_dict(converted_state_dict)
     model = model.to(DEVICE)
     model.eval()
+    bundle["_checkpoint_path"] = str(pkl_path.resolve())
     return model, bundle
 
 
