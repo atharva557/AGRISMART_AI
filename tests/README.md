@@ -1,13 +1,30 @@
 # Tests
 
-Run from the repository root: `python -m unittest discover -s tests -v`.
+Run from the repository root with the project virtual environment activated.
 
-These checks verify the Flask shell, A-D request/response behavior, saved A-model inference when its local artifact is present, B/D calculations, and C forecast rules using deterministic provider data. They do not execute notebooks, train models, or independently reproduce saved benchmark metrics. Replace the core inference placeholder check when the disease model is connected.
+## Prerequisites
 
-The current suite has 12 tests. It loads named request fixtures from `docs/examples/bonus_contract_examples.json`; the A exact-row test requires both the packaged model and the pinned original CSV at `data/crop_recommendation/raw/Crop_recommendation.csv`. With no CSV, that request correctly returns `DATA_UNAVAILABLE` rather than an experimental result. The separate A model-scale fixture omits `row_id` and can run without raw data. The model-dependent test is skipped only when the model artifact itself is missing.
+Install `requirements.txt`, then build the frontend and obtain the existing runtime checkpoints:
 
-Before running the full suite, obtain the pinned CSV as described in [data/README.md](../data/README.md). When the model is present but the CSV is absent, the exact-row test assertion fails; that fixture prerequisite does not prevent the dashboard's no-CSV A demonstration from working. No training is required to install the original source CSV.
+```powershell
+npm install
+npm run build:all
+git lfs pull --include="model/weights/cv/model_v3.pkl,model/weights/cv/model_v1.pkl" --exclude=""
+```
 
-C's tests inject complete provider-shaped data or use the explicit simulated demo, so they do not depend on live network availability. JSON `negative_acceptance_cases` describe current outcomes; `planned_acceptance_cases` are a roadmap, not additional passing tests. The suite does not cover all proposed field-safety checks, authenticate calibration/evidence records, or validate production performance.
+The checkpoints are downloaded, not trained. ResNet-50 (`model_v2.pkl`) is not needed by the Flask primary/fallback path. On CPU-only machines, install compatible CPU PyTorch/torchvision wheels before the remaining requirements.
 
-For a real prediction smoke test, place a properly sourced image from your permitted data at `tests/sample_leaf.jpg` locally. It is ignored by Git. No fake JPEG or copied dataset image is bundled.
+## Checks
+
+```powershell
+python -m pytest tests -q
+npm run test:frontend
+# Optional standalone route/template/asset check:
+python tests/test_frontend.py
+```
+
+The Python suite checks routes and compiled assets, A-D contracts and calculations, sample-image CV inference, and the assistant's fallback/mocked Gemini behavior. The JavaScript tests check that the disease assistant preserves `raw_label`, including punctuation, instead of passing the readable disease name to the knowledge base.
+
+A's model-dependent test omits `row_id`, so it does not need the raw CSV. Exact-row requests still require the pinned CSV described in [data/README.md](../data/README.md). C uses injected provider data or its explicit simulated demo. Gemini tests mock generation, and the regional-language fallback test disables the translator rather than making a live request.
+
+These checks never execute notebooks or train models. A sample-image prediction does not independently reproduce the saved accuracy/F1 benchmarks or establish field reliability. The suite also does not authenticate calibration/evidence records or cover every proposed field-safety gate. JSON `planned_acceptance_cases` remain a roadmap, not claims of passing tests.
