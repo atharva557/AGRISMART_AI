@@ -23,6 +23,7 @@
         <p class="text-base text-gray-600 max-w-2xl mx-auto">
           Run the crop, irrigation, weather, and resource-use modules from one dashboard. Experimental and simulated outputs are clearly labelled throughout.
         </p>
+        <a href="{{ url_for('main.disease_upload') }}" class="btn btn-primary mt-4">Start with a leaf photo</a>
       </div>
 
       <!-- Scope notice -->
@@ -97,6 +98,10 @@
             <label>Soil moisture m&sup3;/m&sup3;
               <input name="moisture" type="number" min="0" max="1" step="0.01" value="0.20" required aria-required="true">
             </label>
+            <details class="col-span-full p-3 border border-gray-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold">Advanced soil and weather inputs — assumed demo values</summary>
+            <p class="text-sm my-2">Use calibrated measurements and locally appropriate parameters for a field assessment. Hidden values below remain assumptions in this demonstration.</p>
+            <div class="input-grid">
             <label>Field capacity
               <input name="fieldCapacity" type="number" min="0" max="1" step="0.01" value="0.30" required aria-required="true">
             </label>
@@ -127,6 +132,8 @@
             <label>Target area ha
               <input name="area" type="number" min="0.0001" step="any" value="1" required aria-required="true">
             </label>
+            </div>
+            </details>
             <button type="submit">Calculate advice</button>
           </form>
           <div id="irrigation-output" class="output" aria-live="polite" aria-atomic="true"></div>

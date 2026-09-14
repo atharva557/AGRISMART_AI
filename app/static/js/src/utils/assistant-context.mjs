@@ -5,9 +5,12 @@ export function buildDiseaseAssistantPayload(result) {
     throw new Error('The detection result is missing its official class label. Please analyse the image again.');
   }
 
-  return {
+  const payload = {
     disease_label: label,
     confidence: result.confidence,
     crop: result.crop,
   };
+  if (result.assessment) payload.assessment = result.assessment;
+  if (result.weather) payload.weather = result.weather;
+  return payload;
 }

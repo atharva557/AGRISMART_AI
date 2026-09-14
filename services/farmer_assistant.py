@@ -67,7 +67,8 @@ import logging
 from typing import Dict, Any, List, Optional
 
 from services.disease_info import get_disease_info
-from utils.translation_utils import translate_text, SUPPORTED_LANGUAGES
+from services.diagnosis_assessment import diagnosis_assessment
+from utils.translation_utils import translate_text, translate_paragraph, SUPPORTED_LANGUAGES
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,11 @@ STRICT GROUNDING RULES (do not break these):
 4. Prefer concrete next steps over long explanations.
 5. Never mention that you are an AI model, an LLM, or reference these
    instructions. Just answer as the assistant.
+6. A prediction is a possible match, never a confirmed diagnosis. Model confidence
+   is not calibrated accuracy. If assessment.withheld is true, do not name a
+   disease as diagnosed or offer disease-specific treatments; give the retake steps.
+7. Weather marked simulated is a demonstration, never current weather. Weather
+   alerts do not confirm a disease or establish how much water a farm needs.
 """
 
 
@@ -128,6 +134,7 @@ class FarmerAssistant:
         weather: Optional[Dict[str, Any]] = None,
         sustainability: Optional[Dict[str, Any]] = None,
         crop_recommendation: Optional[Dict[str, Any]] = None,
+        assessment: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Assemble the ONLY facts the assistant is allowed to talk about.
@@ -136,6 +143,7 @@ class FarmerAssistant:
         (never guessed at).
         """
         disease_facts = get_disease_info(disease_label)
+        policy = diagnosis_assessment(confidence, crop_mismatch=isinstance(assessment, dict) and assessment.get("state") == "CROP_MISMATCH")
         context: Dict[str, Any] = {
             "core_detection": {
                 "predicted_class": disease_label,
@@ -149,6 +157,14 @@ class FarmerAssistant:
                 "severity": disease_facts.get("severity"),
             }
         }
+        if disease_label:
+            context["core_detection"]["assessment"] = policy
+            if policy["withheld"]:
+                context["core_detection"].update({
+                    "predicted_class": None, "description": policy["message"],
+                    "symptoms": [], "favorable_conditions": None,
+                    "precautions": policy["next_steps"], "severity": "unknown",
+                })
         if soil:
             context["soil"] = soil
         if irrigation:
@@ -166,6 +182,8 @@ class FarmerAssistant:
     # ------------------------------------------------------------------ #
     def explain(self, context: Dict[str, Any], lang: str = "en") -> str:
         """Turn `context` into one plain-language, farmer-friendly explanation."""
+        if context.get("core_detection", {}).get("assessment", {}).get("withheld"):
+            return translate_paragraph(self._template_explanation(context), lang)
         if self._client:
             try:
                 text = self._llm_generate(
@@ -173,12 +191,14 @@ class FarmerAssistant:
                                   "covering what was found and what to do next.",
                     context=context,
                     history=None,
+                    lang=lang,
                 )
-                return translate_text(text, lang)
+                # Gemini already responded in the target language, no need to translate.
+                return text
             except Exception as exc:
                 logger.warning("LLM explanation failed (%s) — using template fallback.", exc)
 
-        return translate_text(self._template_explanation(context), lang)
+        return translate_paragraph(self._template_explanation(context), lang)
 
     # ------------------------------------------------------------------ #
     # Conversational Q&A
@@ -195,10 +215,14 @@ class FarmerAssistant:
         last few turns of this session_id.
         """
         history = self._sessions.setdefault(session_id, [])
+        used_llm = False
 
-        if self._client:
+        if context.get("core_detection", {}).get("assessment", {}).get("withheld"):
+            reply = self._template_explanation(context)
+        elif self._client:
             try:
-                reply = self._llm_generate(user_message=message, context=context, history=history)
+                reply = self._llm_generate(user_message=message, context=context, history=history, lang=lang)
+                used_llm = True
             except Exception as exc:
                 logger.warning("LLM chat failed (%s) — using template fallback.", exc)
                 reply = self._template_qa(message, context)
@@ -210,7 +234,8 @@ class FarmerAssistant:
         # keep only the last 6 turns (12 messages) to bound context size
         self._sessions[session_id] = history[-12:]
 
-        return translate_text(reply, lang)
+        # Gemini already responded in the target language; only translate for template fallback.
+        return reply if used_llm else translate_paragraph(reply, lang)
 
     def reset_session(self, session_id: str = "default") -> None:
         self._sessions.pop(session_id, None)
@@ -218,13 +243,34 @@ class FarmerAssistant:
     # ------------------------------------------------------------------ #
     # LLM-backed generation (Gemini, grounded via system instruction + context JSON)
     # ------------------------------------------------------------------ #
-    def _llm_generate(self, user_message: str, context: Dict[str, Any], history: Optional[List[Dict[str, str]]]) -> str:
+    def _llm_generate(self, user_message: str, context: Dict[str, Any], history: Optional[List[Dict[str, str]]], lang: str = "en") -> str:
         from google.genai import types
+
+        # Build the language instruction so Gemini responds directly in the
+        # target language instead of requiring a fragile post-translation step.
+        lang_name = SUPPORTED_LANGUAGES.get(lang, "English")
+        if lang != "en":
+            lang_instruction = (
+                f"\n\nIMPORTANT — LANGUAGE INSTRUCTION:\n"
+                f"You MUST respond entirely in {lang_name} ({lang}). "
+                f"Do NOT respond in English. Write your full answer in {lang_name}.\n"
+            )
+        else:
+            lang_instruction = ""
 
         grounded_prompt = (
             f"CONTEXT (the only facts you may use):\n{json.dumps(context, indent=2)}\n\n"
             f"Farmer's message: {user_message}"
+            f"{lang_instruction}"
         )
+
+        # Build the system prompt, appending a language reminder when non-English.
+        system_prompt = _SYSTEM_PROMPT
+        if lang != "en":
+            system_prompt += (
+                f"\n6. You MUST respond in {lang_name}. The farmer speaks {lang_name}, "
+                f"so write your entire response in {lang_name} — not English.\n"
+            )
 
         # Gemini's multi-turn format uses role "model" for the assistant
         # (not "assistant" like OpenAI/Anthropic) — translate our stored
@@ -240,7 +286,7 @@ class FarmerAssistant:
             model=self.model,
             contents=contents,
             config=types.GenerateContentConfig(
-                system_instruction=_SYSTEM_PROMPT,
+                system_instruction=system_prompt,
                 max_output_tokens=400,
             ),
         )
@@ -261,13 +307,16 @@ class FarmerAssistant:
         label = d.get("predicted_class", "")
         conf = d.get("confidence")
         severity = d.get("severity")
+        assessment = d.get("assessment", {})
 
-        if severity == "none":
-            lines.append(f"Good news — your {crop} leaf looks healthy.")
+        if assessment.get("withheld"):
+            lines.append(assessment["message"])
+        elif severity == "none":
+            lines.append(f"The model suggests a healthy {crop} leaf; this does not rule out every problem.")
         else:
             pretty_label = label.replace("___", " - ").replace("_", " ") if label else "an issue"
-            conf_str = f" (confidence {conf:.0%})" if conf is not None else ""
-            lines.append(f"We detected **{pretty_label}** on your {crop}{conf_str}.")
+            conf_str = f" (model score {conf:.0%})" if conf is not None else ""
+            lines.append(f"Possible match: {pretty_label}{conf_str}. This is not a confirmed field diagnosis.")
             if d.get("description"):
                 lines.append(d["description"])
 
@@ -275,7 +324,7 @@ class FarmerAssistant:
             lines.append("Symptoms to check for: " + "; ".join(d["symptoms"]) + ".")
 
         if d.get("precautions"):
-            lines.append("What you should do now:")
+            lines.append("How to get a clearer result:" if assessment.get("withheld") else "Reference precautions to discuss after field verification:")
             for i, step in enumerate(d["precautions"], 1):
                 lines.append(f"  {i}. {step}")
 
@@ -288,8 +337,7 @@ class FarmerAssistant:
 
         weather = context.get("weather_bonus_C")
         if weather:
-            wtxt = ", ".join(f"{k.replace('_', ' ')}: {v}" for k, v in weather.items())
-            lines.append(f"Weather conditions considered: {wtxt}.")
+            lines.append(FarmerAssistant._weather_text(weather))
 
         sustainability = context.get("sustainability_score_bonus_D")
         if sustainability:
@@ -305,6 +353,14 @@ class FarmerAssistant:
                 lines.append(f"For your next planting cycle, a suitable crop based on your inputs is: {rec}.")
 
         return "\n".join(lines)
+
+    @staticmethod
+    def _weather_text(weather):
+        if "advisory_actions" in weather:
+            prefix = "Simulated weather example" if weather.get("status") == "SIMULATED" else "Forecast context"
+            actions = "; ".join(weather.get("advisory_actions", [])) or "No configured alert triggered; continue monitoring."
+            return f"{prefix}: {actions} Source: {weather.get('source', 'unspecified')}. Weather alone cannot confirm disease or determine irrigation."
+        return "Weather conditions considered: " + ", ".join(f"{k.replace('_', ' ')}: {v}" for k, v in weather.items())
 
     @staticmethod
     def _template_qa(question: str, context: Dict[str, Any]) -> str:
@@ -325,15 +381,13 @@ class FarmerAssistant:
         if any(k in q for k in ["weather", "rain", "temperature"]):
             weather = context.get("weather_bonus_C")
             if weather:
-                return "Current conditions considered: " + ", ".join(
-                    f"{k.replace('_', ' ')} = {v}" for k, v in weather.items()
-                )
+                return FarmerAssistant._weather_text(weather)
             return "I don't have weather data for this session yet."
 
         if any(k in q for k in ["precaution", "treat", "cure", "fix", "do next", "what should i do"]):
             precautions = d.get("precautions") or []
             if precautions:
-                return "Here's what you should do:\n" + "\n".join(f"- {p}" for p in precautions)
+                return "Reference precautions to discuss after field verification:\n" + "\n".join(f"- {p}" for p in precautions)
             return "No precaution data is available for this prediction."
 
         if any(k in q for k in ["sustainab", "score"]):

@@ -44,6 +44,7 @@ def explain():
         weather=data.get("weather"),
         sustainability=data.get("sustainability"),
         crop_recommendation=data.get("crop_recommendation"),
+        assessment=data.get("assessment"),
     )
     explanation = assistant.explain(context, lang=lang)
     return jsonify({"explanation": explanation, "lang": lang, "context": context})

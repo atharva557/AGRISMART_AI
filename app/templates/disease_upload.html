@@ -2,7 +2,7 @@
 
 {% block title %}Disease Detection — AgriSmart AI{% endblock %}
 
-{% block meta_description %}Upload a crop image for AI-powered disease diagnosis. ConvNeXt-Tiny model with 99.85% validation accuracy across 38 disease classes.{% endblock %}
+{% block meta_description %}Check a leaf photo, get clear retake guidance, and add optional weather context to a possible disease match.{% endblock %}
 
 {% block content %}
 <section class="py-10 sm:py-12 bg-gray-100">
@@ -18,7 +18,7 @@
       </p>
       <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-3">Crop Disease Detection</h1>
       <p class="text-base text-gray-600 leading-relaxed">
-        Upload a clear photo of your crop for AI analysis. The ConvNeXt-Tiny model identifies diseases across 38 classes.
+        Photograph one affected leaf. Get a possible match and next steps, with optional weather guidance for your farm.
       </p>
     </div>
 
@@ -26,6 +26,31 @@
 
       <!-- Upload Card -->
       <div class="card mb-6">
+
+        <div class="mb-5 space-y-3">
+          <label for="scanCrop" class="block text-sm font-semibold">Your crop (optional)</label>
+          <select id="scanCrop" class="w-full rounded-lg border-gray-300">
+            <option value="">Not sure / check the photo</option>
+          </select>
+          <details class="p-3 border border-gray-200 rounded-lg">
+            <summary class="cursor-pointer font-semibold text-sm">Add weather to this scan (optional)</summary>
+            <label for="scanWeatherMode" class="block text-sm mt-3">Weather source</label>
+            <select id="scanWeatherMode" class="w-full rounded-lg border-gray-300 mt-1">
+              <option value="none">No weather</option>
+              <option value="live">Live forecast for my farm</option>
+              <option value="demo">Simulated example — Pune</option>
+            </select>
+            <div id="scanCoordinates" hidden>
+              <p class="text-sm my-3">These coordinates will be sent to Open-Meteo to fetch a forecast when you analyse the photo.</p>
+              <button id="useScanLocation" type="button" class="btn btn-secondary">Use my location</button>
+              <p id="locationStatus" class="text-sm mt-2" role="status"></p>
+              <div class="grid sm:grid-cols-2 gap-3 mt-3">
+                <label for="scanLatitude">Latitude<input id="scanLatitude" type="number" min="-90" max="90" step="any" class="block w-full rounded-lg" placeholder="e.g. 18.5204"></label>
+                <label for="scanLongitude">Longitude<input id="scanLongitude" type="number" min="-180" max="180" step="any" class="block w-full rounded-lg" placeholder="e.g. 73.8567"></label>
+              </div>
+            </div>
+          </details>
+        </div>
 
         <!-- Guidelines -->
         <div class="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg" role="note">
@@ -98,21 +123,22 @@
       <div id="analysisResult" role="status" aria-live="polite" aria-atomic="true"></div>
 
       <!-- Model Information -->
-      <div class="card bg-gray-50 mt-6">
-        <h2 class="text-base font-semibold text-gray-900 mb-3">About the Model</h2>
+      <details class="card bg-gray-50 mt-6">
+        <summary class="text-base font-semibold text-gray-900 mb-3 cursor-pointer">Model evidence and limitations</summary>
         <dl class="space-y-1.5 text-sm text-gray-700">
           <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Architecture</dt><dd>ConvNeXt-Tiny (384 px)</dd></div>
           <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Training data</dt><dd>PlantVillage dataset — 54,305 images, 38 classes</dd></div>
-          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Validation accuracy</dt><dd>99.85%</dd></div>
-          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Macro-F1 score</dt><dd>0.9969</dd></div>
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Historical lab validation</dt><dd>99.85% accuracy / 0.9969 macro-F1</dd></div>
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Small field-image test</dt><dd>11/34 correct (32.4%); not the official test</dd></div>
+          <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Official field macro-F1</dt><dd>Pending organizer evaluation</dd></div>
           <div class="flex gap-2"><dt class="font-medium w-44 flex-shrink-0">Confidence threshold</dt><dd>75% — predictions below this are flagged</dd></div>
         </dl>
         <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <p class="text-xs text-amber-800 leading-relaxed">
-            <strong>Limitation:</strong> This model is trained on lab-quality images. Field photos with soil, background clutter, or multiple leaves may show reduced accuracy. Always verify results with local agricultural experts.
+            <strong>Limitation:</strong> Historical scores have not been revalidated for the compressed weights or orientation-handling change. Photo-quality checks are experimental and cannot identify unrelated objects. Even a high-scoring match can be wrong in the field.
           </p>
         </div>
-      </div>
+      </details>
 
     </div>
   </div>

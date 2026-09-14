@@ -1,3 +1,4 @@
+{% set navigation = [('/', 'Home'), ('/disease', 'Disease Detection'), ('/advisory', 'Advisory'), ('/about', 'About')] %}
 <header class="site-header" id="site-header">
   <nav class="container mx-auto px-4 sm:px-6 lg:px-8" role="navigation" aria-label="Main navigation">
     <div class="flex items-center justify-between h-16 gap-4">
@@ -5,7 +6,7 @@
       <!-- ── Brand (top-left) ──────────────────────────────── -->
       <div class="flex items-center flex-shrink-0">
         <a href="/"
-           class="brand-link nav-brand-slide focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+           class="brand-link focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
            style="outline-color: var(--primary);"
            aria-label="AgriSmart AI — Home">
           <svg class="w-8 h-8 flex-shrink-0" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -22,10 +23,10 @@
 
       <!-- ── Desktop Navigation (centre) ─────────────────────── -->
       <div class="hidden md:flex items-center gap-0.5 flex-1 justify-center">
-        <a href="/"       data-nav-link class="nav-link">Home</a>
-        <a href="/disease" data-nav-link class="nav-link">Disease Detection</a>
-        <a href="/advisory" data-nav-link class="nav-link">Advisory</a>
-        <a href="/about"   data-nav-link class="nav-link">About</a>
+        {% for href, label in navigation %}
+        {% set active = request.path == href or (href != '/' and request.path.startswith(href ~ '/')) %}
+        <a href="{{ href }}" data-nav-link class="nav-link{% if active %} active{% endif %}"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
       </div>
 
       <!-- ── Right controls: theme toggle + mobile menu ──────── -->
@@ -37,7 +38,7 @@
           class="theme-toggle"
           aria-label="Switch to dark mode"
           title="Toggle day / night mode">
-          <span id="theme-opt-light" class="theme-toggle__option active" aria-hidden="true">☀️</span>
+          <span id="theme-opt-light" class="theme-toggle__option"        aria-hidden="true">☀️</span>
           <span id="theme-opt-dark"  class="theme-toggle__option"        aria-hidden="true">🌙</span>
         </button>
 
@@ -68,68 +69,36 @@
       role="menu"
       aria-labelledby="mobile-menu-button">
       <div class="flex flex-col gap-0.5 pt-2">
-        <a href="/"        data-nav-link class="nav-link" role="menuitem">Home</a>
-        <a href="/disease"  data-nav-link class="nav-link" role="menuitem">Disease Detection</a>
-        <a href="/advisory" data-nav-link class="nav-link" role="menuitem">Advisory Dashboard</a>
-        <a href="/about"    data-nav-link class="nav-link" role="menuitem">About</a>
+        {% for href, label in navigation %}
+        {% set active = request.path == href or (href != '/' and request.path.startswith(href ~ '/')) %}
+        <a href="{{ href }}" data-nav-link class="nav-link{% if active %} active{% endif %}" role="menuitem"{% if active %} aria-current="page"{% endif %}>{{ label }}</a>
+        {% endfor %}
       </div>
     </div>
   </nav>
 </header>
 
 <script>
-  /* ── Theme toggle — runs immediately to avoid flash ──────── */
+  /* Theme is already resolved in base.html; bind controls after parsing. */
   (function () {
     'use strict';
 
     var STORAGE_KEY = 'agrismart-theme';
     var html = document.documentElement;
 
-    /* Apply persisted or system-preferred theme before first paint */
-    function applyTheme(theme) {
-      if (theme === 'dark') {
-        html.classList.add('dark');
-      } else {
-        html.classList.remove('dark');
-      }
-    }
-
-    /* Read persisted preference; fall back to system preference */
-    function getInitialTheme() {
-      try {
-        var stored = localStorage.getItem(STORAGE_KEY);
-        if (stored === 'dark' || stored === 'light') return stored;
-      } catch (e) {}
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-
-    /* Update pill toggle — move .active class to the current mode slot */
+    /* Toggle highlighting follows html.dark in CSS from the first render. */
     function syncToggleUI(isDark) {
       var btn      = document.getElementById('theme-toggle');
-      var optLight = document.getElementById('theme-opt-light');
-      var optDark  = document.getElementById('theme-opt-dark');
       if (!btn) return;
-
-      if (isDark) {
-        optLight && optLight.classList.remove('active');
-        optDark  && optDark.classList.add('active');
-        btn.setAttribute('aria-label', 'Switch to day mode');
-      } else {
-        optDark  && optDark.classList.remove('active');
-        optLight && optLight.classList.add('active');
-        btn.setAttribute('aria-label', 'Switch to night mode');
-      }
+      btn.setAttribute('aria-label', isDark ? 'Switch to day mode' : 'Switch to night mode');
+      btn.setAttribute('aria-pressed', String(isDark));
     }
-
-    /* Apply initial theme immediately */
-    var initialTheme = getInitialTheme();
-    applyTheme(initialTheme);
 
     document.addEventListener('DOMContentLoaded', function () {
       /* Sync toggle UI after DOM is ready */
       syncToggleUI(html.classList.contains('dark'));
 
-      /* Enable smooth transitions only after initial paint */
+      /* Enable interaction transitions once initial styles and controls are ready. */
       requestAnimationFrame(function () {
         html.classList.add('theme-loaded');
       });

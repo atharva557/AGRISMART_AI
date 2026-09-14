@@ -1,30 +1,20 @@
 # Tests
 
-Run from the repository root with the project virtual environment activated.
-
-## Prerequisites
-
-Install `requirements.txt`, then build the frontend and obtain the existing runtime checkpoints:
+Run from the repository root with the project virtual environment active:
 
 ```powershell
-npm install
-npm run build:all
-git lfs pull --include="model/weights/cv/model_v3.pkl,model/weights/cv/model_v1.pkl" --exclude=""
-```
-
-The checkpoints are downloaded, not trained. ResNet-50 (`model_v2.pkl`) is not needed by the Flask primary/fallback path. On CPU-only machines, install compatible CPU PyTorch/torchvision wheels before the remaining requirements.
-
-## Checks
-
-```powershell
-python -m pytest tests -q
+python -m pytest -q tests
 npm run test:frontend
-# Optional standalone route/template/asset check:
-python tests/test_frontend.py
 ```
 
-The Python suite checks routes and compiled assets, A-D contracts and calculations, sample-image CV inference, and the assistant's fallback/mocked Gemini behavior. The JavaScript tests check that the disease assistant preserves `raw_label`, including punctuation, instead of passing the readable disease name to the knowledge base.
+Install Python requirements and frontend dependencies, then run `npm run build:all` first. The CV checkpoints are now tracked as `model/weights/cv/model_v*.pkl.gz`; Git LFS is not required for this version.
 
-A's model-dependent test omits `row_id`, so it does not need the raw CSV. Exact-row requests still require the pinned CSV described in [data/README.md](../data/README.md). C uses injected provider data or its explicit simulated demo. Gemini tests mock generation, and the regional-language fallback test disables the translator rather than making a live request.
+The checks cover pages/assets, A–D contracts, saved-model inference, the disease API-to-assistant connection, image validation/cleanup, concurrent cache initialization, forced reload, and fallback. The cache is per Python process, not shared between server workers. Gemini responses and regional translation fallback are mocked for offline tests; no live service verification is implied.
 
-These checks never execute notebooks or train models. A sample-image prediction does not independently reproduce the saved accuracy/F1 benchmarks or establish field reliability. The suite also does not authenticate calibration/evidence records or cover every proposed field-safety gate. JSON `planned_acceptance_cases` remain a roadmap, not claims of passing tests.
+A's no-row model-scale test requires its saved artifact but not the raw CSV. Requests with `row_id` still require the exact pinned source CSV. C uses deterministic provider-shaped data or its explicit demo.
+
+Tests do not train models, execute notebooks, authenticate field evidence, or prove real-world accuracy. The stored historical benchmark scores have not been independently reproduced for the newly FP16-compressed checkpoints. Sample inference explicitly skips if its permitted sample image is absent.
+
+Standalone frontend check: `python tests/test_frontend.py`.
+
+See [inference reliability verification](../docs/INFERENCE_HARDENING.md) for the recorded results and operational limitations.

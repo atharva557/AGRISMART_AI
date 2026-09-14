@@ -11,14 +11,25 @@
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
 
+  <!-- Resolve the page theme before CSS or visible markup can be painted. -->
+  <script>
+    (function () {
+      var theme;
+      try {
+        theme = localStorage.getItem('agrismart-theme');
+      } catch (e) {}
+      if (theme !== 'dark' && theme !== 'light') {
+        theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark' : 'light';
+      }
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    }());
+  </script>
+
   <!-- Compiled CSS (Tailwind + custom components) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dist/main.min.css') }}">
 
   {% block extra_css %}{% endblock %}
-
-  <!-- Preconnect hints for external fonts (loaded on demand only if Inter is not system font) -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 </head>
 <body>
   <!-- Skip to main content — keyboard / screen-reader navigation -->

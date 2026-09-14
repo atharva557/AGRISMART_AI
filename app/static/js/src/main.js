@@ -31,9 +31,6 @@ window.LeafLoader = LeafLoader;
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-  // Set active navigation
-  UI.setActiveNav(window.location.pathname);
-
   // Silently check backend health (no visible status UI)
   checkBackendHealth();
 
