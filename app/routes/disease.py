@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 """Disease detection API endpoint integrating trained CV model and agronomic KB.
 
 Security measures implemented:
@@ -12,13 +13,16 @@ Security measures implemented:
 import logging
 import os
 import uuid
+=======
+"""Mandatory core API. Connect trained inference here when available."""
+import os
+import os.path
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, request, jsonify, current_app
 from werkzeug.utils import secure_filename
 
-from services.disease_info import get_disease_info
-
-logger = logging.getLogger(__name__)
+from model.predict import predict_detailed
 
 bp = Blueprint("disease", __name__)
 
@@ -37,10 +41,17 @@ def _allowed_extension(filename: str) -> bool:
 
 @bp.post("/api/disease/predict")
 def predict():
+<<<<<<< HEAD
     """Disease prediction endpoint with image upload and deep inference."""
 
     # ── 1. File presence check ──────────────────────────────────────────────
     if "image" not in request.files:
+=======
+    """Disease prediction endpoint with image upload handling"""
+    
+    # Check if file is present
+    if 'image' not in request.files:
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
         return jsonify({
             "status": "INVALID_INPUT",
             "message": "No image file provided. Send a multipart/form-data request with field name 'image'.",
@@ -55,14 +66,23 @@ def predict():
             "message": "No file selected.",
             "result": None,
         }), 422
+<<<<<<< HEAD
 
     # ── 2. Extension whitelist ──────────────────────────────────────────────
     if not _allowed_extension(file.filename):
+=======
+    
+    # Validate file type
+    allowed_extensions = {'png', 'jpg', 'jpeg'}
+    if not '.' in file.filename or \
+       file.filename.rsplit('.', 1)[1].lower() not in allowed_extensions:
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
         return jsonify({
             "status": "INVALID_INPUT",
             "message": "Unsupported file type. Please upload a JPG or PNG image.",
             "result": None,
         }), 422
+<<<<<<< HEAD
 
     # ── 3. Lazy import of deep learning inference module ────────────────────
     try:
@@ -79,12 +99,19 @@ def predict():
     safe_name = secure_filename(file.filename)
     filename = f"{uuid.uuid4().hex}_{safe_name}"
     upload_folder = current_app.config.get("UPLOAD_FOLDER", "uploads")
+=======
+    
+    # Save file temporarily
+    filename = secure_filename(file.filename)
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
     os.makedirs(upload_folder, exist_ok=True)
     filepath = os.path.join(upload_folder, filename)
     filepath = os.path.normpath(filepath)  # resolve any residual traversal sequences
 
     try:
         file.save(filepath)
+<<<<<<< HEAD
 
         # ── 5. Validate the file is actually a readable image ────────────────
         # This check runs BEFORE inference. It catches:
@@ -179,6 +206,52 @@ def predict():
         _cleanup(filepath)
         # Log the full traceback internally; return a safe generic message to the client.
         logger.error("Prediction failed for uploaded file: %s", exc, exc_info=True)
+=======
+        
+        try:
+            details = predict_detailed(filepath)
+            
+            # Clean up uploaded file
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            
+            return jsonify({
+                "status": "OK",
+                "result": {
+                    "disease": details["clean_label"],
+                    "disease_name": details["clean_label"],
+                    "confidence": details["confidence"],
+                    "is_confident": details["is_confident"],
+                    "recommendations": [
+                        "Consult with a local agricultural expert for confirmation",
+                        "Monitor affected plants closely",
+                        "Isolate infected plants if possible"
+                    ],
+                    "description": f"Detected: {details['clean_label']}"
+                },
+                "limitations": [
+                    "Model confidence threshold is 75%",
+                    "Consult expert for low confidence predictions",
+                    "Lab-trained model may have reduced accuracy on field photos"
+                ]
+            }), 200
+            
+        except NotImplementedError as e:
+            # Model not yet implemented
+            if os.path.exists(filepath):
+                os.remove(filepath)
+            return jsonify({
+                "status": "DATA_UNAVAILABLE",
+                "message": "Disease detection model is not yet implemented. The image upload works, but prediction is pending integration.",
+                "result": None,
+                "error": str(e)
+            }), 503
+            
+    except Exception as e:
+        # Clean up on error
+        if os.path.exists(filepath):
+            os.remove(filepath)
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
         return jsonify({
             "status": "ERROR",
             "message": "An error occurred while analysing the image. "

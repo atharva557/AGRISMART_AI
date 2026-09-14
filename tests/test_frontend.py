@@ -17,9 +17,14 @@ sys.path.insert(0, str(ROOT))
 
 from app import create_app
 
+<<<<<<< HEAD
 
 def test_routes():
     """Test that all active routes return 200 status."""
+=======
+def check_routes():
+    """Test that all routes return 200 status"""
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
     app = create_app()
     client = app.test_client()
 
@@ -86,10 +91,19 @@ def test_routes():
         print("=" * 60 + "\n")
         return 1
 
+<<<<<<< HEAD
 
 def test_static_files():
     """Test that critical compiled static files exist."""
     print("\n" + "=" * 60)
+=======
+def check_static_files():
+    """Test that critical static files exist"""
+    import os
+    from pathlib import Path
+    
+    print("\n" + "="*60)
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
     print("STATIC ASSETS CHECK")
     print("=" * 60 + "\n")
 
@@ -122,10 +136,18 @@ def test_static_files():
         print("=" * 60 + "\n")
         return 1
 
+<<<<<<< HEAD
 
 def test_templates():
     """Test that active templates exist and confirmed-dead legacy templates have been removed."""
     print("\n" + "=" * 60)
+=======
+def check_templates():
+    """Test that all required templates exist"""
+    from pathlib import Path
+    
+    print("\n" + "="*60)
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
     print("TEMPLATES CHECK")
     print("=" * 60 + "\n")
 
@@ -186,6 +208,7 @@ def test_templates():
         print("=" * 60 + "\n")
         return 1
 
+<<<<<<< HEAD
 
 if __name__ == '__main__':
     exit_code = 0
@@ -193,6 +216,28 @@ if __name__ == '__main__':
     exit_code |= test_static_files()
     exit_code |= test_routes()
 
+=======
+def test_routes():
+    assert check_routes() == 0, 'One or more frontend routes failed'
+
+
+def test_static_files():
+    assert check_static_files() == 0, 'Required frontend assets are missing; run npm run build:all'
+
+
+def test_templates():
+    assert check_templates() == 0, 'Required frontend templates are missing'
+
+
+if __name__ == '__main__':
+    exit_code = 0
+    
+    # Run all tests
+    exit_code |= check_templates()
+    exit_code |= check_static_files()
+    exit_code |= check_routes()
+    
+>>>>>>> 635112f527443e4acb8b707fa1ce187e931d31c5
     if exit_code == 0:
         print("\n\033[92m" + "=" * 60)
         print("FRONTEND INTEGRATION COMPLETE - ALL CHECKS PASSED")
