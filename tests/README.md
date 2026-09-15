@@ -17,4 +17,4 @@ Tests do not train models, execute notebooks, authenticate field evidence, or pr
 
 Standalone frontend check: `python tests/test_frontend.py`.
 
-See [inference reliability verification](../docs/INFERENCE_HARDENING.md) for the recorded results and operational limitations.
+See the root [README](../README.md) for recorded results and operational limitations.

@@ -9,7 +9,7 @@ These notebooks are historical, user-run experiment records. Saved outputs are a
 - [`plant_pathology/03_train_convnext_tiny.ipynb`](plant_pathology/03_train_convnext_tiny.ipynb): ConvNeXt-Tiny iteration; saved best validation macro-F1 0.9969.
 - [`plant_pathology/sys_gpu_check.ipynb`](plant_pathology/sys_gpu_check.ipynb): optional environment check.
 
-The vision notebooks select checkpoints and report final metrics on the same validation directory. They do not include an independent test split, dataset checksum, split manifest, or fixed random seed. Set `PLANTVILLAGE_DIR` to a folder containing `train/` and `val/` before a user-run retraining session. Treat the saved results as historical validation evidence. Use [`../model/evaluate.py`](../model/evaluate.py) and [`../docs/FIELD_EVALUATION.md`](../docs/FIELD_EVALUATION.md) for a new independent, manifest-backed evaluation.
+The vision notebooks select checkpoints and report final metrics on the same validation directory. They do not include an independent test split, dataset checksum, split manifest, or fixed random seed. Set `PLANTVILLAGE_DIR` to a folder containing `train/` and `val/` before a user-run retraining session. Treat the saved results as historical validation evidence. Use [`../model/evaluate.py`](../model/evaluate.py) for a new independent, manifest-backed evaluation.
 
 ## Advisory experiments
 

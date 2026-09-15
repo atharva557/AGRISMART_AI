@@ -1,309 +1,375 @@
-# AgriSmart AI — Smart Agricultural Diagnostics & Precision Advisory Platform
+# AgriSmart AI
 
-## Judge entry point and current evidence
+AI-powered crop disease detection and evidence-aware precision agriculture advisory.
 
-**This is a working prototype.** Historical PlantVillage validation: **0.9969 macro-F1 / 99.85% accuracy** on 10,861 images. Historical field sample: **11/34 correct (32.4%)**. Neither is the organizers' held-out score. Current compressed checkpoints and EXIF-orientation handling have not received a new full benchmark.
+AgriSmart AI combines a packaged computer-vision classifier with crop recommendation, irrigation, weather, sustainability, and multilingual farmer-assistance modules. The application is designed as a working hackathon prototype: model outputs are shown with confidence and limitations, simulated values remain visibly labelled, and uncertain diagnoses withhold disease-specific guidance.
 
-**Still pending:** exact organizer labels/split and baseline, official field results, team-confirmed originality declaration, and the recorded demo URL. The model currently has 38 PlantVillage classes; compatibility with the final kickoff subset is unverified.
+## Submission status
 
-### Hackathon model result card
+| Item | Status |
+| --- | --- |
+| Core disease classifier and Python `predict(image_path) -> class_label` interface | Implemented |
+| Web upload and farmer-facing diagnosis workflow | Implemented |
+| Packaged model weights | Included |
+| Bonus A: crop recommendation | Implemented as an experimental dataset-scoped classifier |
+| Bonus B: smart irrigation | Implemented as an evidence-aware soil-water-balance calculation |
+| Bonus C: weather intelligence | Implemented with Open-Meteo and an explicitly simulated offline mode |
+| Bonus D: sustainability score | Implemented as a transparent resource-comparison formula |
+| Bonus E: multilingual farmer assistant | Implemented with Gemini integration and an offline grounded fallback |
+| Bonus F: IoT integration | Not claimed |
+| Bonus G: autonomous agent | Not claimed |
+| Organizer-held-out field score | Pending organizer evaluation |
+| Demo video | Pending team upload |
+| Deployed application | Run locally; public deployment not supplied |
 
-| Result | Value | How judges should interpret it |
-| --- | ---: | --- |
-| Historical local validation macro-F1 | **0.9969** | Best saved ConvNeXt-Tiny result on the 10,861-image validation directory used during model selection. It is not an independent or organizer-held-out score. |
-| Historical local validation accuracy | **99.85%** | 10,845/10,861 saved validation predictions were correct. Current compressed weights and preprocessing still require a fresh full evaluation. |
-| PlantDoc field stress-test top-1 | **32.4% (11/34)** | Small convenience sample showing substantial lab-to-field domain shift; not an official benchmark. |
-| PlantDoc field stress-test top-3 | **58.8% (20/34)** | Supporting diagnostic evidence only; the historical sampler could include PlantDoc train and test directories. |
-| Organizer-held-out score | **Pending** | Run the supplied submission check and manifest-based evaluator after the organizers provide the exact class list and test data. |
+## Quick start
 
-The authoritative submission summary is the **[concise model report](report/model_report.md)**. Use the [report index](report/README.md) to distinguish submission evidence from historical experiment records, and the [notebook index](notebooks/README.md) for saved-output status and reproducibility limitations.
+### Requirements
 
-- [Concise model report](report/model_report.md) and [historical detailed evidence](report/historical_validation_report.md).
-- [Submission checklist](docs/SUBMISSION_CHECKLIST.md), [originality draft and references](docs/ORIGINALITY.md), [four-minute demo script](docs/JUDGE_DEMO.md).
-- **Demo URL:** pending recording. **Deployed app:** not supplied; run locally using the setup below.
+- Python 3.11 or newer
+- Node.js 16 or newer
+- At least 1.5 GB free space for Python packages and model loading
 
-### New farmer workflow
+### Install and run
 
-Start at `/disease`: choose an optional crop, upload one leaf photo and optionally add a live forecast or explicitly simulated weather example. Very small or nearly blank/dark/overexposed photos receive retake steps. Possible blur is advisory. A low model score or selected-crop mismatch withholds disease-specific guidance in both the result and assistant. Weather source, time window and simulation status travel with the same scan into the assistant.
+```powershell
+git clone https://github.com/atharva557/AGRISMART_AI.git
+cd AGRISMART_AI
 
-These quality rules are experimental: they do not detect unrelated objects, calibrate confidence or establish improved field accuracy. Weather cannot establish irrigation volume or confirm a disease. Irrigation and sustainability inputs remain separate, explicit demonstrations. No sensor-feed integration (F) or continuous autonomous agent (G) is claimed.
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 
-### One prediction and evaluation
+npm ci
+npm run build:all
 
-From the repository root, using an existing permitted photograph (sample images are local and absent from fresh clones):
+python run.py
+```
+
+Open `http://127.0.0.1:5000`.
+
+The Gemini key is optional. Copy `.env.example` to `.env` and set `GEMINI_API_KEY` only when live generation is required. Without a key, the assistant uses its deterministic grounded fallback.
+
+## Required prediction interface
+
+Default CLI output is exactly one class label:
 
 ```powershell
 python -m model.predict --image "C:\path\to\leaf.jpg"
 ```
 
-Default stdout is only the raw class label; `--details` adds diagnostics. Python interface: `from model.predict import predict; label = predict(image_path)`. Web uncertainty policy does not remove samples from the classifier's mandatory label output.
+Detailed diagnostics are optional:
 
 ```powershell
-# Loads saved weights; without organizer labels, reports pending and exits 2.
+python -m model.predict --image "C:\path\to\leaf.jpg" --details
+```
+
+Python interface:
+
+```python
+from model.predict import predict
+
+label = predict("path/to/leaf.jpg")
+```
+
+Check the packaged checkpoint and local label order:
+
+```powershell
 python -m model.submission_check
-# When the exact organizer list is available:
 python -m model.submission_check --labels "C:\path\to\organizer_classes.json"
-# User-run independent local evaluation; never trains or executes notebooks:
-python -m model.evaluate --manifest data/field_eval/manifest.csv --labels model/classes.json --dataset-name "Independent field development set" --output outputs/field_eval/run-01
 ```
 
-See [evaluation protocol](docs/FIELD_EVALUATION.md) for the manifest contract, per-class metrics, confusion matrix and confidence-coverage analysis. Do not rename or silently discard classes to hide organizer incompatibility. Never train or tune on the organizers' held-out set.
+The current model contains 38 PlantVillage labels. Exact compatibility with the organizer's final shared class list must be checked with the second command. Labels must not be renamed or silently removed to hide incompatibility.
 
-> **Smart India Hackathon (SIH 2026)** | AI-Powered Multiclass Crop Pathology Detection & Precision Farming Advisory System
+## Architecture
 
----
-
-## 1. Executive Overview
-
-**AgriSmart AI** is a hackathon prototype combining crop-image classification, experimental advisory tools and a contextual multilingual assistant. The main unresolved challenge is generalization from laboratory leaves to field photographs.
-
----
-
-## 2. Core Functional Modules
-
-```
-                                  AGRISMART AI PLATFORM
- ┌─────────────────────────────────────────────────────────────────────────────────────────┐
- │                                                                                         │
- │   Module 1: Plant Pathology Engine         Module 2: Crop Recommendation                │
- │   • ConvNeXt-Tiny (384px) Local Leader     • 7-Feature Soil & Nutrient Matching         │
- │   • 38 Pathology Classes (14 Crops)        • Top-3 Ranked Crop Suitability Candidates   │
- │   • 99.85% Validation Accuracy             • Multi-Classifier Machine Learning Model    │
- │                                                                                         │
- │   Module 3: Smart Irrigation Balance       Module 4: Dynamic Weather Intelligence       │
- │   • Root-Zone Soil Water Balance           • Live Open-Meteo Forecast Integration       │
- │   • Water Deficit & Volume Calculations    • Real-Time Risk Alerts (Frost/Heat/Rain)    │
- │   • Evapotranspiration (ET₀) Tracking      • Proactive Field Protection Warnings        │
- │                                                                                         │
- │   Module 5: Sustainability Scoring         Module 6: Multilingual GenAI Assistant       │
- │   • Water, Energy & Nitrogen Benchmarking  • Powered by Google Gemini LLM               │
- │   • Resource Efficiency Optimization       • Grounded Agronomic Context & Symptoms     │
- │   • Yield Safeguard & Eco Ratings          • Multi-turn Q&A in Regional Languages       │
- │                                                                                         │
- └─────────────────────────────────────────────────────────────────────────────────────────┘
+```text
+Browser
+  -> Flask routes and JSON validation
+      -> Crop disease classifier (ConvNeXt-Tiny; ResNet-18 fallback)
+      -> Crop recommendation model
+      -> Soil-water-balance irrigation service
+      -> Open-Meteo weather rules
+      -> Sustainability formula
+      -> Grounded multilingual farmer assistant
 ```
 
-### Module 1: Computer Vision Plant Pathology Diagnostic Engine
-- **Primary Architecture:** **ConvNeXt-Tiny (384px)** with a saved historical result of **99.85% validation accuracy** and **0.9969 Macro-F1** across 38 crop pathology categories. These are local validation results, not an organizer-held-out score.
-- **Automated Fallback:** ResNet-18 (224px) baseline model ready for resource-constrained deployments.
-- **Uncertainty policy:** A 75% model-score threshold withholds disease-specific guidance for uncertain predictions. This threshold is not a safety guarantee; incorrect high-score predictions remain possible.
-- **Agronomic Knowledge Base:** Provides reference descriptions, symptoms and precautions from `DISEASE_KB`; these are not symptoms or severity measured from the uploaded image. Independent source validation remains pending.
+### Core image workflow
 
-### Module 2: Precision Crop Recommendation Engine
-- **Multi-Nutrient Analysis:** Evaluates soil Nitrogen (N), Phosphorus (P), Potassium (K), pH, rainfall, temperature, and humidity.
-- **Candidate Ranking:** Identifies and ranks the top-3 optimal crop candidates for specific field parameters.
+1. Validate file type, content, dimensions, pixel count, and basic image quality.
+2. Apply EXIF orientation, RGB conversion, resize, tensor conversion, and ImageNet normalization.
+3. Load and cache the packaged model.
+4. Produce the exact raw class label, model score, top candidates, and model version.
+5. Withhold disease-specific guidance when the score is below 0.75 or the selected crop conflicts with the prediction.
 
-### Module 3: Smart Irrigation & Soil-Water Advisory
-- **Soil-Water Balance Modeling:** Implements a root-zone depletion formula accounting for field capacity, wilting point, effective root depth, and crop coefficient ($K_c$).
-- **Volume Deficit Calculations:** Calculates precise irrigation requirements in liters and cubic meters ($m^3$) per hectare to prevent water stress and over-irrigation.
+The 0.75 value is an uncalibrated model-score threshold, not a guarantee of correctness. The photo-quality checks are heuristics and are not a semantic non-plant detector.
 
-### Module 4: Dynamic Weather Intelligence & Agronomic Alerts
-- **Live Forecast Tracking:** Integrates 24-hour Open-Meteo hourly meteorological data based on GPS coordinates.
-- **Automated Risk Alerts:** Evaluates field risks including frost conditions, heat stress, heavy rainfall, high wind velocities, and excessive humidity.
+## Complete reported metrics
 
-### Module 5: Sustainability & Resource Optimization
-- **Resource Comparison:** Compares supplied baseline/current water, electricity and nitrogen totals per hectare. Demo baselines are assumptions, not verified regional standards.
-- **Sustainability Index:** Computes a composite efficiency score (0–100) with a yield-retention safeguard.
+All numbers below are preserved from saved user-run experiment outputs. Historical validation metrics are not organizer-held-out results and have not been independently reproduced for the current compressed FP16 checkpoints.
 
-### Module 6: Multilingual GenAI Farmer Assistant
-- **Contextual Agricultural AI:** Google Gemini receives the scan and reference facts, with template fallback. This reduces reliance on free-form generation but does not eliminate factual errors; disease-reference validation remains incomplete.
-- **Regional Accessibility:** Supports multi-turn conversational guidance in **English, Hindi, Marathi, Telugu, Tamil, Gujarati, and Bengali**.
+### Core crop-disease model comparison
 
----
+PlantVillage color dataset used by the saved notebooks:
 
-## 3. Technology Stack
+- Reported total: 54,305 images
+- Training directory: 43,444 images (80.0%)
+- Validation directory: 10,861 images (20.0%)
+- Classes: 38 plant-pathology labels across 14 crops
+- The validation directory was used for model selection and final reporting; it is not an independent test set.
+- The saved core notebooks do not establish a dataset checksum, split manifest, or fixed random seed.
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Deep Learning & ML** | PyTorch, Torchvision, Timm (`convnext_tiny`), Scikit-Learn, Joblib, NumPy, Pandas |
-| **Generative AI** | Google GenAI SDK (Gemini API), deep-translator |
-| **Backend Framework** | Python 3.11+, Flask 3.1, Werkzeug |
-| **Frontend & UI** | Tailwind CSS 3.3, Webpack 5, Vanilla ES6+ JavaScript, PostCSS, Autoprefixer |
-| **External APIs** | Open-Meteo Weather Forecast API |
+| Model | Input | Macro-F1 | Accuracy | Average saved GPU latency |
+| --- | ---: | ---: | ---: | ---: |
+| ResNet-18 (v1 baseline) | 224 x 224 | 0.9912 | 99.43% | 7.6 ms |
+| ResNet-50 (v2) | 224 x 224 | 0.9946 | 99.67% | 5.4 ms |
+| ConvNeXt-Tiny (v3 selected) | 384 x 384 | 0.9969 | 99.85% (10,845 / 10,861) | 24.51 ms |
 
----
+Selected v3 aggregate validation metrics:
 
-## 4. Quickstart & Installation
+| Metric | Value |
+| --- | ---: |
+| Macro precision | 0.9970 |
+| Macro recall | 0.9968 |
+| Macro-F1 | 0.9969 |
+| Weighted F1 | 0.9985 |
+| Accuracy | 0.9985 |
+| Classes with F1 above 0.9900 | 33 / 38 |
+| Lowest class F1 | 0.9608 |
 
-### Prerequisites
-- **Python 3.11** or higher
-- **Node.js (v16+)** & **npm** (for compiling frontend assets)
-- Optional: CUDA-compatible GPU for accelerated deep learning inference
+#### ConvNeXt-Tiny per-class validation metrics
 
-### Step-by-Step Setup
+| Class | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| Apple___Apple_scab | 1.0000 | 1.0000 | 1.0000 | 126 |
+| Apple___Black_rot | 1.0000 | 1.0000 | 1.0000 | 125 |
+| Apple___Cedar_apple_rust | 1.0000 | 1.0000 | 1.0000 | 55 |
+| Apple___healthy | 1.0000 | 0.9939 | 0.9970 | 329 |
+| Blueberry___healthy | 0.9934 | 1.0000 | 0.9967 | 300 |
+| Cherry_(including_sour)___Powdery_mildew | 1.0000 | 1.0000 | 1.0000 | 210 |
+| Cherry_(including_sour)___healthy | 1.0000 | 0.9941 | 0.9971 | 170 |
+| Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot | 0.9703 | 0.9515 | 0.9608 | 103 |
+| Corn_(maize)___Common_rust_ | 1.0000 | 0.9958 | 0.9979 | 239 |
+| Corn_(maize)___Northern_Leaf_Blight | 0.9700 | 0.9848 | 0.9773 | 197 |
+| Corn_(maize)___healthy | 1.0000 | 1.0000 | 1.0000 | 233 |
+| Grape___Black_rot | 1.0000 | 1.0000 | 1.0000 | 236 |
+| Grape___Esca_(Black_Measles) | 1.0000 | 1.0000 | 1.0000 | 276 |
+| Grape___Leaf_blight_(Isariopsis_Leaf_Spot) | 1.0000 | 1.0000 | 1.0000 | 215 |
+| Grape___healthy | 1.0000 | 1.0000 | 1.0000 | 84 |
+| Orange___Haunglongbing_(Citrus_greening) | 1.0000 | 1.0000 | 1.0000 | 1,102 |
+| Peach___Bacterial_spot | 1.0000 | 1.0000 | 1.0000 | 459 |
+| Peach___healthy | 1.0000 | 1.0000 | 1.0000 | 72 |
+| Pepper,_bell___Bacterial_spot | 1.0000 | 1.0000 | 1.0000 | 200 |
+| Pepper,_bell___healthy | 1.0000 | 1.0000 | 1.0000 | 295 |
+| Potato___Early_blight | 1.0000 | 1.0000 | 1.0000 | 200 |
+| Potato___Late_blight | 0.9950 | 0.9950 | 0.9950 | 200 |
+| Potato___healthy | 0.9677 | 0.9677 | 0.9677 | 31 |
+| Raspberry___healthy | 1.0000 | 1.0000 | 1.0000 | 74 |
+| Soybean___healthy | 1.0000 | 0.9990 | 0.9995 | 1,018 |
+| Squash___Powdery_mildew | 1.0000 | 1.0000 | 1.0000 | 367 |
+| Strawberry___Leaf_scorch | 1.0000 | 1.0000 | 1.0000 | 222 |
+| Strawberry___healthy | 1.0000 | 1.0000 | 1.0000 | 92 |
+| Tomato___Bacterial_spot | 1.0000 | 1.0000 | 1.0000 | 425 |
+| Tomato___Early_blight | 0.9950 | 1.0000 | 0.9975 | 200 |
+| Tomato___Late_blight | 0.9948 | 0.9974 | 0.9961 | 382 |
+| Tomato___Leaf_Mold | 1.0000 | 1.0000 | 1.0000 | 191 |
+| Tomato___Septoria_leaf_spot | 1.0000 | 1.0000 | 1.0000 | 354 |
+| Tomato___Spider_mites Two-spotted_spider_mite | 1.0000 | 1.0000 | 1.0000 | 335 |
+| Tomato___Target_Spot | 1.0000 | 1.0000 | 1.0000 | 281 |
+| Tomato___Tomato_Yellow_Leaf_Curl_Virus | 1.0000 | 1.0000 | 1.0000 | 1,071 |
+| Tomato___Tomato_mosaic_virus | 1.0000 | 1.0000 | 1.0000 | 74 |
+| Tomato___healthy | 1.0000 | 1.0000 | 1.0000 | 318 |
+
+The saved notebook computes a validation confusion matrix but does not export a numeric matrix artifact. The organizer-held-out macro-F1, confusion matrix, and per-class precision/recall remain pending organizer evaluation.
+
+### Historical field stress test
+
+The saved PlantDoc-style convenience sample contains 34 images. The historical sampler could draw from PlantDoc train and test directories, so these numbers are diagnostic evidence only and are not an official held-out benchmark.
+
+| Model | Top-1 accuracy | Top-3 accuracy | Mean softmax score | Below 0.75 threshold |
+| --- | ---: | ---: | ---: | ---: |
+| ResNet-18 | 14.7% | 47.1% | 64.5% | 58.8% |
+| ResNet-50 | 23.5% | 44.1% | 66.6% | 50.0% |
+| ConvNeXt-Tiny | 32.4% (11 / 34) | 58.8% (20 / 34) | 65.0% | 44.1% |
+
+This result demonstrates a substantial lab-to-field domain gap. Confidence gating withholds some low-score outputs but does not prevent incorrect high-score predictions.
+
+### Bonus A: crop recommendation model
+
+Source dataset: Atharva Ingle Crop Recommendation Dataset version 1, publisher-listed Apache 2.0, 2,200 rows, 22 balanced labels. Split: 1,320 training, 440 validation, and 440 test rows using seed 42.
+
+Validation model comparison:
+
+| Model | Macro-F1 | Accuracy | Top-3 accuracy |
+| --- | ---: | ---: | ---: |
+| Random forest | 0.995452 | 0.995455 | 1.000000 |
+| Gaussian naive Bayes | 0.995443 | 0.995455 | 1.000000 |
+| Logistic regression | 0.972596 | 0.972727 | 1.000000 |
+| Majority baseline | 0.003953 | 0.045455 | 0.136364 |
+
+Selected random-forest test metrics:
+
+| Metric | Value |
+| --- | ---: |
+| Macro-F1 | 0.990869 |
+| Accuracy | 0.990909 |
+| Top-3 accuracy | 1.000000 |
+
+Per-class test metrics:
+
+| Crop | Precision | Recall | F1 | Support |
+| --- | ---: | ---: | ---: | ---: |
+| apple | 1.0000 | 1.0000 | 1.0000 | 20 |
+| banana | 1.0000 | 1.0000 | 1.0000 | 20 |
+| blackgram | 1.0000 | 1.0000 | 1.0000 | 20 |
+| chickpea | 1.0000 | 1.0000 | 1.0000 | 20 |
+| coconut | 1.0000 | 1.0000 | 1.0000 | 20 |
+| coffee | 1.0000 | 1.0000 | 1.0000 | 20 |
+| cotton | 1.0000 | 1.0000 | 1.0000 | 20 |
+| grapes | 1.0000 | 1.0000 | 1.0000 | 20 |
+| jute | 0.8696 | 1.0000 | 0.9302 | 20 |
+| kidneybeans | 1.0000 | 1.0000 | 1.0000 | 20 |
+| lentil | 1.0000 | 0.9500 | 0.9744 | 20 |
+| maize | 1.0000 | 1.0000 | 1.0000 | 20 |
+| mango | 1.0000 | 1.0000 | 1.0000 | 20 |
+| mothbeans | 0.9524 | 1.0000 | 0.9756 | 20 |
+| mungbean | 1.0000 | 1.0000 | 1.0000 | 20 |
+| muskmelon | 1.0000 | 1.0000 | 1.0000 | 20 |
+| orange | 1.0000 | 1.0000 | 1.0000 | 20 |
+| papaya | 1.0000 | 1.0000 | 1.0000 | 20 |
+| pigeonpeas | 1.0000 | 1.0000 | 1.0000 | 20 |
+| pomegranate | 1.0000 | 1.0000 | 1.0000 | 20 |
+| rice | 1.0000 | 0.8500 | 0.9189 | 20 |
+| watermelon | 1.0000 | 1.0000 | 1.0000 | 20 |
+
+Limitations: the source has unresolved N/P/K units and rainfall aggregation period, contains augmented data, and has no independent farm/season evaluation. Scores rank source-dataset labels; they are not calibrated probabilities of field suitability.
+
+### Bonus B: irrigation controller experiment
+
+The saved experiment uses the Mendeley Smart Irrigation Control System dataset version 3 from a strawberry field in Paraguay. It predicts the recorded controller's valve opening within the next hour; it does not learn an agronomically optimal irrigation dose. The serving application therefore uses a transparent soil-water-balance calculation instead of this classifier.
+
+| Metric | Value |
+| --- | ---: |
+| Training rows | 2,408 |
+| Validation rows | 435 |
+| Test rows | 577 |
+| Selected model | Random forest |
+| Decision threshold | 0.85 |
+| Test macro-F1 | 0.601253 |
+| Test accuracy | 0.899480 |
+| Positive precision | 0.277778 |
+| Positive recall | 0.238095 |
+| Positive F1 | 0.256410 |
+| Average precision | 0.363945 |
+
+Saved test confusion matrix:
+
+| Actual / predicted | Closed | Opens |
+| --- | ---: | ---: |
+| Closed | 509 | 26 |
+| Opens | 32 | 10 |
+
+Only 10 of 42 positive test windows were detected. Windows are correlated and do not represent independent irrigation events.
+
+### Bonus C: weather intelligence
+
+This module is rule-based and has no trained-model accuracy metric. It checks complete Open-Meteo forecast windows for cold, heat, rain, wind, humidity, and reference evapotranspiration conditions. Live failures are reported as unavailable and are never silently replaced with simulated data.
+
+### Bonus D: sustainability score
+
+This module uses a reproducible project-defined formula rather than a trained model:
+
+```text
+resource_component = clip(50 + 50 * ((baseline_per_ha - current_per_ha) / baseline_per_ha), 0, 100)
+
+raw_score =
+    0.40 * water_component
+  + 0.30 * electricity_component
+  + 0.30 * nitrogen_component
+```
+
+If current yield per hectare is below 95% of baseline, the final score is capped at 50. The saved default simulated comparison scores 57.75 / 100. This is an indicative comparison, not an environmental certification or proof of software-caused savings.
+
+### Bonus E: farmer assistant
+
+No model-quality benchmark is claimed for generated text. Gemini calls and regional-language translation are optional; offline tests mock provider behavior. The deterministic fallback is grounded in the supplied scan/advisory context and refuses unsupported questions.
+
+Supported interface languages include English, Hindi, Marathi, Gujarati, Telugu, Tamil, Kannada, Bengali, and Punjabi. Live translation quality must be checked before demonstration.
+
+## Data sources and licences
+
+| Component | Source | Licence / status |
+| --- | --- | --- |
+| Core training/validation | PlantVillage color images | Exact downloaded distribution, licence, and kickoff correspondence require team confirmation |
+| Historical field sample | PlantDoc | Historical diagnostic sample; exact sample manifest was not preserved |
+| Crop recommendation | [Atharva Ingle Crop Recommendation Dataset](https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset), version 1 | Publisher-listed Apache 2.0 |
+| Irrigation experiment | [Mendeley Smart Irrigation Control System Data](https://data.mendeley.com/datasets/cjb4vy4mzj/3), version 3, DOI 10.17632/cjb4vy4mzj.3 | CC BY 4.0 |
+| Weather | [Open-Meteo](https://open-meteo.com/en/docs) | Provider terms apply; source and timestamps are returned |
+| Sustainability terminology | [FAO WaPOR](https://www.fao.org/in-action/remote-sensing-for-water-productivity/wapor-data/) | Concept reference only; the score is project-defined |
+| CV backbones | PyTorch/Torchvision ResNet-18/50 and timm ConvNeXt-Tiny | Pretrained/open-source components; upstream licences apply |
+| Generative assistant | Google GenAI SDK and Gemini API | Provider terms apply |
+
+Dataset contents remain outside Git where licensing, privacy, or size requires it. Source hashes and saved experiment metadata are retained in the repository's machine-readable report JSON and output files.
+
+## Web routes and APIs
+
+| Method | Route | Purpose |
+| --- | --- | --- |
+| GET | `/` | Home |
+| GET | `/disease` | Disease upload workflow |
+| GET | `/advisory` | Advisory modules A-E |
+| GET | `/about` | Project overview |
+| GET | `/api/health` | Check service and model-file presence |
+| POST | `/api/disease/predict` | Classify an uploaded image |
+| POST | `/api/crops/recommend` | Rank experimental crop candidates |
+| POST | `/api/irrigation/advise` | Calculate irrigation advice |
+| POST | `/api/weather/advise` | Evaluate live or simulated weather |
+| POST | `/api/sustainability/score` | Compare whole-cycle resources |
+| POST | `/api/assistant/chat` | Grounded conversational assistance |
+
+## Verification
 
 ```powershell
-# 1. Clone repository & enter directory
-git clone https://github.com/atharva557/AGRISMART_AI.git
-cd AGRISMART_AI
-
-# 2. (Optional) Create and activate virtual environment
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-# 3. Install Python dependencies
-python -m pip install -r requirements.txt
-
-# 4. Install Node.js packages & build frontend production assets
-npm ci
-npm run build:all
-
-# 5. Configure environment variables (Optional: Add Gemini API key for Assistant)
-copy .env.example .env
-
-# 6. Launch the AgriSmart AI web server
-python run.py
-```
-
-Access the application in your browser at: **`http://127.0.0.1:5000`**. The committed npm lockfile pins frontend dependencies; Python requirements remain bounded rather than fully locked.
-
----
-
-## 5. Web Interface Routes & REST API
-
-### Web Interface Views
-
-| Page | URL Route | Description |
-| :--- | :--- | :--- |
-| **Home** | `/` | Platform landing page, system health indicator, and overview |
-| **Disease Detection** | `/disease` | Drag-and-drop leaf photo diagnosis with live results |
-| **Advisory Suite** | `/advisory` | Precision advisory tools (Crop, Irrigation, Weather, Sustainability) |
-| **About & Docs** | `/about` | Architecture overview, dataset provenance, and team methodology |
-
-### REST API Endpoints
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/health` | Service health status check |
-| `POST` | `/api/disease/predict` | Upload leaf image (multipart) -> Full pathology diagnostic report |
-| `POST` | `/api/crops/recommend` | Soil nutrients & weather inputs -> Ranked top-3 crop recommendations |
-| `POST` | `/api/irrigation/advise` | Root-zone soil parameters -> Water deficit & required volume ($m^3$) |
-| `POST` | `/api/weather/advise` | Coordinates -> Live forecast summary & agricultural hazard alerts |
-| `POST` | `/api/sustainability/score` | Resource consumption vs baseline -> Sustainability efficiency score |
-| `POST` | `/api/assistant/chat` | Multi-turn contextual chat with grounded GenAI Farmer Assistant |
-
----
-
-## 6. Model Benchmarks (Plant Pathology Classifier)
-
-Historical reported results on **10,861 validation samples** (PlantVillage 80/20 train-val split). These scores have not been independently revalidated for the current FP16-compressed checkpoints or EXIF-orientation handling and do not establish field-photo accuracy:
-
-| Model Architecture | Input Resolution | Macro-F1 | Top-1 Accuracy | Avg GPU Latency | Checkpoint Location |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **ConvNeXt-Tiny (Champion)** | **384 × 384** | **0.9969** | **99.85%** | **24.5 ms** | `model/weights/cv/model_v3.pkl.gz` |
-| **ResNet-50 (Enhanced)** | 224 × 224 | 0.9946 | 99.67% | 5.4 ms | `model/weights/cv/model_v2.pkl.gz` |
-| **ResNet-18 (Baseline)** | 224 × 224 | 0.9912 | 99.43% | 7.6 ms | `model/weights/cv/model_v1.pkl.gz` |
-
-The first prediction lazily loads the model; subsequent predictions reuse it. Concurrent first-time loads are serialized. This cache is per server process, with ResNet-18 as a fallback if ConvNeXt cannot load. Git LFS is no longer required for the compressed checkpoints.
-
-See [inference reliability fixes and verification](docs/INFERENCE_HARDENING.md) for upload errors, cache lifecycle, test commands, and remaining limitations.
-
----
-
-## 7. Project Directory Structure
-
-```
-AGRISMART_AI/
-├── app/                        # Flask Web Application
-│   ├── routes/                 # API & view blueprints (disease, advisory, assistant, main)
-│   ├── static/                 # Static CSS, JS, images, and compiled dist bundles
-│   └── templates/              # Jinja2 HTML templates & reusable UI components
-├── model/                      # ML Inference & Checkpoints
-│   ├── classes.json            # 38 local model labels; organizer alignment pending
-│   ├── model_loader.py         # Singleton cached PyTorch model loader
-│   ├── predict.py              # CLI & Python inference engine
-│   └── weights/                # Serialized model checkpoints
-│       ├── cv/                 # ConvNeXt-Tiny (v3), ResNet-50 (v2), ResNet-18 (v1)
-│       └── crop_recommendation/# Random Forest crop ranking weights
-├── services/                   # Business Logic & Advisory Services
-│   ├── crop_recommendation.py  # Precision crop matching logic
-│   ├── disease_info.py         # Curated agronomic pathology knowledge base (DISEASE_KB)
-│   ├── farmer_assistant.py     # GenAI Assistant integration
-│   ├── irrigation.py           # Soil-water balance calculation
-│   ├── sustainability.py       # Resource optimization scoring
-│   └── weather.py              # Live Open-Meteo forecast rules & alerts
-├── report/                     # Model evaluation reports and dataset audit documentation
-├── notebooks/                  # Model training, EDA, and research notebooks
-├── tests/                      # Automated test suite and frontend verification scripts
-├── docs/                       # Technical specs, roadmaps, and archived logs
-│   ├── CV_ENHANCEMENTS.md      # Computer Vision advancement roadmap
-│   ├── DEPLOYMENT.md           # Production deployment guide
-│   └── MODULE_REFERENCE.md     # In-depth module technical reference
-├── run.py                      # Flask development server entrypoint
-├── config.py                   # Application configuration
-├── requirements.txt            # Python dependencies
-└── package.json                # Frontend asset build configuration
-```
-
----
-
-## 8. Testing & Verification
-
-Run the verification suites from the project root:
-
-```powershell
-# Run frontend route & template verification
-python tests/test_frontend.py
-
-# Run all Python tests (including pytest-style workflow and metric tests)
 python -m pytest -q tests
 npm run test:frontend
+python -m compileall -q app model services tests
 ```
 
----
+The test suite covers routes and assets, upload validation and cleanup, model-cache behavior, saved-model inference, evaluation contracts, advisory contracts, assistant grounding, regional-language fallbacks, and frontend context preservation. Mocked provider tests do not prove live weather, Gemini, or translation availability.
 
-## 9. Research Notebooks & Technical Reports Reference
+## Repository structure
 
-A structured overview of all research notebooks, evaluation scripts, and engineering reports available across the repository.
+```text
+app/            Flask routes, templates, and web assets
+model/          inference, evaluation, labels, and packaged checkpoints
+services/       advisory and assistant business logic
+notebooks/      historical user-run training and research records
+outputs/        saved metrics and figures
+report/         required concise report and machine-readable evidence
+tests/          Python, frontend, and contract fixtures
+data/           local dataset instructions; dataset contents are ignored
+```
 
-### Plant Pathology Research & Training Notebooks (`notebooks/plant_pathology/`)
+## Known limitations
 
-- **[`01_train_resnet18.ipynb`](./notebooks/plant_pathology/01_train_resnet18.ipynb)**: ResNet-18 baseline model training pipeline on the 38-class dataset. Establishes baseline accuracy (99.43%) with lightweight computational footprint for edge deployment.
-- **[`02_train_resnet50.ipynb`](./notebooks/plant_pathology/02_train_resnet50.ipynb)**: Deeper ResNet-50 architecture exploration achieving 99.67% validation accuracy with detailed cross-entropy loss tracking and learning rate scheduling.
-- **[`03_train_convnext_tiny.ipynb`](./notebooks/plant_pathology/03_train_convnext_tiny.ipynb)**: Best historical local-validation **ConvNeXt-Tiny (384px)** experiment. Includes augmentation and cosine annealing, with saved validation results of 99.85% accuracy and 0.9969 Macro-F1.
-- **[`sys_gpu_check.ipynb`](./notebooks/plant_pathology/sys_gpu_check.ipynb)**: Hardware diagnostics and CUDA acceleration verification notebook for training and inference environments.
+- Official organizer-held-out metrics and baseline comparison are not yet available.
+- The 38-class model may not match the organizer's final class contract.
+- Very high laboratory validation performance does not transfer reliably to field photographs.
+- The confidence threshold is uncalibrated.
+- No semantic unrelated-object or unsupported-crop detector is implemented.
+- Disease reference guidance requires local agronomic review.
+- Crop recommendation lacks independently validated physical input semantics and farm outcomes.
+- Irrigation results depend on locally calibrated measurements and parameters.
+- Weather alerts use project-defined thresholds.
+- Sustainability examples do not establish causal savings or carbon impact.
+- No IoT actuation or autonomous agent is claimed.
 
-### Advisory Engines & Simulation Notebooks (`notebooks/advisory_models/`)
+## Originality and reuse declaration
 
-- **[`01_crop_recommendation.ipynb`](./notebooks/advisory_models/01_crop_recommendation.ipynb)**: Multi-feature exploratory data analysis, feature importance extraction, and multi-class classification model training for soil nutrient matching.
-- **[`02_irrigation_training.ipynb`](./notebooks/advisory_models/02_irrigation_training.ipynb)**: Chronological experiment that predicts one controller's observed valve behavior from moisture history; it does not learn optimal irrigation volume.
-- **[`03_irrigation_simulation.ipynb`](./notebooks/advisory_models/03_irrigation_simulation.ipynb)**: Daily root-zone soil water balance simulation across distinct soil textures (Sandy, Loam, Clay) and crop growth stages.
-- **[`04_weather_advisory.ipynb`](./notebooks/advisory_models/04_weather_advisory.ipynb)**: Weather risk rule validation, threshold tuning for frost/heat/storm alerts, and Open-Meteo API response schema testing.
-- **[`05_sustainability_score.ipynb`](./notebooks/advisory_models/05_sustainability_score.ipynb)**: Project resource-comparison formula, yield-retention check, simulated scenarios, and sensitivity analysis.
+This repository contains team-authored integration, application, validation, documentation, and experiment work developed for the hackathon. It uses open-source libraries, pretrained model architectures, public datasets, and external APIs identified above. AI coding assistance was used for implementation, documentation, and verification. The team does not claim ownership of third-party libraries, pretrained architectures, datasets, or provider services.
 
-### Evaluation & Benchmarking Tools (`notebooks/evaluation_benchmarks/`)
+Any directly copied or adapted third-party notebook/code not already disclosed above must be added by the team before submission. Commit timestamps document repository activity but are not, by themselves, proof of authorship.
 
-- **[`streamlit_console.py`](./notebooks/evaluation_benchmarks/streamlit_console.py)**: Historical interactive console for single-image predictions and confidence flagging across the three packaged checkpoints.
-- **[`benchmark_plantdoc.py`](./notebooks/evaluation_benchmarks/benchmark_plantdoc.py)**: Deterministic PlantDoc test-directory convenience sampler for future field stress tests. Historical saved results used 34 images and could include PlantDoc train-directory files.
-- **[`benchmark_web_images.py`](./notebooks/evaluation_benchmarks/benchmark_web_images.py)**: PlantVillage GitHub source-domain smoke test. It is not a field or unrelated-web-image benchmark.
-- **`model_summaries/` & `test_images/`**: Saved model metrics and historical convenience-sample images.
+## Model report
 
-### Model Performance & Data Audit Reports (`report/`)
-
-- **[`report/README.md`](./report/README.md)**: Judge-facing index separating the current submission report from supporting historical records.
-- **[`report/model_report.md`](./report/model_report.md)**: Authoritative concise submission summary with model approach, historical evidence, inference contract, limitations, and pending official results.
-- **[`report/model_report_v3.md`](./report/model_report_v3.md)**: Historical ConvNeXt-Tiny experiment record (99.85% validation accuracy, 0.9969 Macro-F1); not an organizer-held-out report.
-- **[`report/model_report_v2.md`](./report/model_report_v2.md)**: Detailed training metrics, confusion matrix breakdown, and per-class precision/recall for ResNet-50 (v2).
-- **[`report/model_report_v1.md`](./report/model_report_v1.md)**: Baseline training documentation and performance statistics for ResNet-18 (v1).
-- **[`report/bonus_ab_data_audit.md`](./report/bonus_ab_data_audit.md)**: Agronomic dataset audit, feature correlation analysis, and data cleaning verification for advisory modules.
-- **[`report/bonus_notebooks_guide.md`](./report/bonus_notebooks_guide.md)**: Technical guide covering advisory simulation pipelines and algorithmic logic.
-- **[`report/irrigation_data_selection.md`](./report/irrigation_data_selection.md)**: Agronomic dataset selection rationale and manifest for root-zone soil water balance calculations.
-
-### Technical Documentation & Engineering Reports (`docs/`)
-
-- **[`docs/MODULE_REFERENCE.md`](./docs/MODULE_REFERENCE.md)**: Deep-dive architecture and technical specification for all 6 functional platform modules.
-- **[`docs/CV_ENHANCEMENTS.md`](./docs/CV_ENHANCEMENTS.md)**: Implementation roadmap for Grad-CAM Explainable AI (XAI), Out-of-Distribution (OOD) leaf validation filters, and blur detection.
-- **[`docs/DEPLOYMENT.md`](./docs/DEPLOYMENT.md)**: Comprehensive production deployment guide covering Gunicorn, Nginx reverse proxying, Docker containerization, and systemd service management.
-- **[`docs/SETUP_INSTRUCTIONS.md`](./docs/SETUP_INSTRUCTIONS.md)**: Step-by-step local workstation setup, GPU CUDA environment configuration, and dependency management.
-- **[`docs/FRONTEND_README.md`](./docs/FRONTEND_README.md)**: Modernized UI design system, Tailwind CSS styling architecture, and reusable Jinja2 component guide.
-- **[`docs/BUILD_README.md`](./docs/BUILD_README.md)**: Webpack 5 module bundler guide for compiling modular ES6 JavaScript pipelines.
-- **[`docs/bonus_input_contract.md`](./docs/bonus_input_contract.md)**: API request/response JSON schema definitions for advisory engines.
-
----
-
-## 10. License & Attribution
-
-- **Core datasets:** PlantVillage and historical PlantDoc samples. Exact distributions, source versions, licenses and kickoff split correspondence need team confirmation.
-- **Bonus datasets:** source identifiers, versions, hashes and reported licensing are in [data instructions](data/README.md), [bonus source manifest](report/bonus_modules_sources.json) and [irrigation manifest](report/irrigation_dataset_manifest.json).
-- **Weather Provider:** Open-Meteo Forecast API; retain provider attribution and review applicable use conditions.
-- **Originality and reuse:** [Team-review declaration draft](docs/ORIGINALITY.md). AI coding assistance was used; the reference inventory requires team completion before submission.
+The required concise report is available at [report/model_report.md](report/model_report.md). The complete reported metric tables are maintained in this README so judges can evaluate the repository from a single entry point.

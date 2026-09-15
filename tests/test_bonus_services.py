@@ -13,7 +13,7 @@ from services.weather import EXPECTED_UNITS, VARIABLES, get_weather_advice
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CASES = json.loads((ROOT / "docs" / "examples" / "bonus_contract_examples.json").read_text(encoding="utf-8"))["cases"]
+CASES = json.loads((ROOT / "tests" / "fixtures" / "bonus_contract_examples.json").read_text(encoding="utf-8"))["cases"]
 CASE_BY_NAME = {case["name"]: case["request"] for case in CASES}
 
 
