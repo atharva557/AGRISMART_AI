@@ -1050,6 +1050,16 @@ html.dark .text-red-600  { color: var(--danger-text) !important; }
 html.dark .bg-green-50  { background-color: var(--primary-subtle) !important; }
 html.dark .text-green-700.text-2xl { color: var(--primary) !important; }
 
+/* Hero primary CTA must stay high-contrast against the dark image overlay. */
+html.dark .hero-btn-primary {
+  background-color: #ffffff !important;
+  color: #14532d !important;
+}
+html.dark .hero-btn-primary:hover {
+  background-color: #f0fdf4 !important;
+  color: #14532d !important;
+}
+
 /* About page: technical / resources blocks */
 html.dark .bg-gray-50.rounded-lg { background-color: var(--surface-alt) !important; }
 html.dark .border-b.border-gray-200 { border-color: var(--border) !important; }

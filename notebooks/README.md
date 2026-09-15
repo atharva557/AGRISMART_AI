@@ -20,7 +20,3 @@ The vision notebooks select checkpoints and report final metrics on the same val
 - [`advisory_models/05_sustainability_score.ipynb`](advisory_models/05_sustainability_score.ipynb): project formula and sensitivity examples.
 
 The advisory notebooks have saved outputs and no saved exception outputs. Modules C and D are rules/formulas rather than trained ML. Their default records are demonstrations and do not establish farm impact.
-
-## Historical benchmark utilities
-
-`evaluation_benchmarks/benchmark_plantdoc.py` produced the saved 34-image PlantDoc comparison. Its historical sampling could include files from PlantDoc's train directory when the test directory did not reach the target, so the result is a small convenience-sample stress test rather than a clean held-out benchmark. `benchmark_web_images.py` samples the PlantVillage GitHub repository and is therefore a source-domain smoke test despite its filename. Both scripts retain historical context; use the manifest-based evaluator for new reported results.

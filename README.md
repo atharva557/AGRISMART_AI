@@ -18,7 +18,7 @@ AgriSmart AI combines a packaged computer-vision classifier with crop recommenda
 | Bonus E: multilingual farmer assistant | Implemented with Gemini integration and an offline grounded fallback |
 | Bonus F: IoT integration | Not claimed |
 | Bonus G: autonomous agent | Not claimed |
-| Organizer-held-out field score | Pending organizer evaluation |
+| Organizer-held-out evaluation | Pending organizer evaluation |
 | Demo video | Pending team upload |
 | Deployed application | Run locally; public deployment not supplied |
 
@@ -108,6 +108,8 @@ The 0.75 value is an uncalibrated model-score threshold, not a guarantee of corr
 
 All numbers below are preserved from saved user-run experiment outputs. Historical validation metrics are not organizer-held-out results and have not been independently reproduced for the current compressed FP16 checkpoints.
 
+> **Core validation result:** ConvNeXt-Tiny achieved **0.9969 macro-F1** and **99.85% accuracy** on the saved 10,861-image PlantVillage validation directory.
+
 ### Core crop-disease model comparison
 
 PlantVillage color dataset used by the saved notebooks:
@@ -180,19 +182,7 @@ Selected v3 aggregate validation metrics:
 | Tomato___Tomato_mosaic_virus | 1.0000 | 1.0000 | 1.0000 | 74 |
 | Tomato___healthy | 1.0000 | 1.0000 | 1.0000 | 318 |
 
-The saved notebook computes a validation confusion matrix but does not export a numeric matrix artifact. The organizer-held-out macro-F1, confusion matrix, and per-class precision/recall remain pending organizer evaluation.
-
-### Historical field stress test
-
-The saved PlantDoc-style convenience sample contains 34 images. The historical sampler could draw from PlantDoc train and test directories, so these numbers are diagnostic evidence only and are not an official held-out benchmark.
-
-| Model | Top-1 accuracy | Top-3 accuracy | Mean softmax score | Below 0.75 threshold |
-| --- | ---: | ---: | ---: | ---: |
-| ResNet-18 | 14.7% | 47.1% | 64.5% | 58.8% |
-| ResNet-50 | 23.5% | 44.1% | 66.6% | 50.0% |
-| ConvNeXt-Tiny | 32.4% (11 / 34) | 58.8% (20 / 34) | 65.0% | 44.1% |
-
-This result demonstrates a substantial lab-to-field domain gap. Confidence gating withholds some low-score outputs but does not prevent incorrect high-score predictions.
+The saved notebook computes a core validation confusion matrix in memory but does not export its values or an image. The organizer-held-out macro-F1, confusion matrix, and per-class precision/recall remain pending organizer evaluation; no core matrix is fabricated here.
 
 ### Bonus A: crop recommendation model
 
@@ -214,6 +204,10 @@ Selected random-forest test metrics:
 | Macro-F1 | 0.990869 |
 | Accuracy | 0.990909 |
 | Top-3 accuracy | 1.000000 |
+
+#### Crop-recommendation held-out confusion matrix
+
+![Crop-recommendation held-out confusion matrix](outputs/figures/crop_test_confusion_matrix.png)
 
 Per-class test metrics:
 
@@ -269,6 +263,8 @@ Saved test confusion matrix:
 | Closed | 509 | 26 |
 | Opens | 32 | 10 |
 
+![Irrigation model test evaluation](outputs/figures/irrigation_test_evaluation.png)
+
 Only 10 of 42 positive test windows were detected. Windows are correlated and do not represent independent irrigation events.
 
 ### Bonus C: weather intelligence
@@ -301,7 +297,6 @@ Supported interface languages include English, Hindi, Marathi, Gujarati, Telugu,
 | Component | Source | Licence / status |
 | --- | --- | --- |
 | Core training/validation | PlantVillage color images | Exact downloaded distribution, licence, and kickoff correspondence require team confirmation |
-| Historical field sample | PlantDoc | Historical diagnostic sample; exact sample manifest was not preserved |
 | Crop recommendation | [Atharva Ingle Crop Recommendation Dataset](https://www.kaggle.com/datasets/atharvaingle/crop-recommendation-dataset), version 1 | Publisher-listed Apache 2.0 |
 | Irrigation experiment | [Mendeley Smart Irrigation Control System Data](https://data.mendeley.com/datasets/cjb4vy4mzj/3), version 3, DOI 10.17632/cjb4vy4mzj.3 | CC BY 4.0 |
 | Weather | [Open-Meteo](https://open-meteo.com/en/docs) | Provider terms apply; source and timestamps are returned |

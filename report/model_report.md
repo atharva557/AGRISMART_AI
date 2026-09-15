@@ -24,8 +24,6 @@ Serving loads compressed FP16 checkpoint tensors into the model parameter dtype,
 
 The ConvNeXt result is historical local validation, not an organizer-held-out score. Saved aggregate values are macro precision 0.9970, macro recall 0.9968, weighted F1 0.9985, and accuracy 0.9985. The full per-class table is in the root [README](../README.md#convnext-tiny-per-class-validation-metrics).
 
-A 34-image historical PlantDoc-style convenience sample produced 32.4% top-1 accuracy (11 / 34) and 58.8% top-3 accuracy (20 / 34) for ConvNeXt-Tiny. Because the historical sampler could use PlantDoc train and test directories, this is diagnostic evidence rather than a clean held-out benchmark.
-
 Organizer-held-out macro-F1, numeric confusion matrix, and per-class precision/recall are pending organizer evaluation.
 
 ## Baseline
