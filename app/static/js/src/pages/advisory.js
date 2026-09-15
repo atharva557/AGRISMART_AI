@@ -283,8 +283,36 @@ function initModuleB() {
 function initModuleC() {
   const form = DOM.byId('weather-form');
   const demoBtn = DOM.byId('weather-demo');
+  const locationBtn = DOM.byId('useWeatherLocation');
   
   if (!form) return;
+
+  if (locationBtn) {
+    locationBtn.addEventListener('click', () => {
+      const status = DOM.byId('weatherLocationStatus');
+      const latInput = form.querySelector('input[name="latitude"]');
+      const lonInput = form.querySelector('input[name="longitude"]');
+
+      if (!navigator.geolocation) {
+        if (status) status.textContent = 'Location is unavailable in your browser. Enter coordinates manually.';
+        return;
+      }
+
+      if (status) status.textContent = 'Getting your location…';
+      navigator.geolocation.getCurrentPosition(
+        ({ coords }) => {
+          if (latInput) latInput.value = coords.latitude.toFixed(4);
+          if (lonInput) lonInput.value = coords.longitude.toFixed(4);
+          if (status) status.textContent = 'Location ready. Coordinates updated.';
+        },
+        (err) => {
+          if (status) status.textContent = 'Unable to retrieve location. Please check browser permissions or enter manually.';
+          console.warn('Geolocation error:', err);
+        },
+        { timeout: 10000 }
+      );
+    });
+  }
   
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -472,139 +500,50 @@ function initModuleE() {
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  /* ─── Leaf orbit overlay helpers ──────────────────────── */
-
-  /**
-   * Create and inject the leaf orbit overlay into <body>.
-   * Returns { overlay, pctEl } so the caller can update / remove it.
-   */
-  function createLeafOverlay() {
-    const overlay = document.createElement('div');
-    overlay.className = 'leaf-orbit-overlay';
-    overlay.setAttribute('role', 'status');
-    overlay.setAttribute('aria-live', 'polite');
-    overlay.setAttribute('aria-label', 'Processing AI response');
-
-    overlay.innerHTML = `
-      <div class="leaf-orbit__ring">
-        <!-- Percentage counter -->
-        <span class="leaf-orbit__pct" id="leaf-orbit-pct" aria-hidden="true">0%</span>
-        <!-- Orbiting leaf -->
-        <span class="leaf-orbit__leaf" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2C10.8 2 9.6 2.6 8.9 3.8C8.2 5 8.2 6.4 8.3 7.7C8.5 9.5 9.5 11 10.8 12C9.5 13.2 8 15.2 8 17.5C8 19.8 9.4 21.5 12 22C14.6 21.5 16 19.8 16 17.5C16 15.2 14.5 13.2 13.2 12C14.5 11 15.5 9.5 15.7 7.7C15.8 6.4 15.8 5 15.1 3.8C14.4 2.6 13.2 2 12 2Z"
-              fill="currentColor" opacity="0.92"/>
-            <path d="M12 8C12 8 11 10 11 12" stroke="currentColor" stroke-width="0.9"
-              stroke-linecap="round" opacity="0.55"/>
-          </svg>
-        </span>
-      </div>
-      <p class="leaf-orbit__label">Consulting agronomic knowledge base…</p>
-    `;
-
-    document.body.appendChild(overlay);
-
-    // Trigger fade-in on next frame so CSS transition fires
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => overlay.classList.add('is-visible'));
-    });
-
-    const pctEl = overlay.querySelector('#leaf-orbit-pct');
-    return { overlay, pctEl };
-  }
-
-  /**
-   * Animate percentage from current value toward a target, updating pctEl.
-   * Returns a cancel function.
-   */
-  function animatePct(pctEl, fromVal, toVal, durationMs) {
-    const start = performance.now();
-    let rafId;
-
-    function step(now) {
-      const elapsed = now - start;
-      const progress = Math.min(elapsed / durationMs, 1);
-      // ease-out cubic
-      const eased = 1 - Math.pow(1 - progress, 3);
-      const current = Math.round(fromVal + (toVal - fromVal) * eased);
-      if (pctEl) pctEl.textContent = current + '%';
-      if (progress < 1) rafId = requestAnimationFrame(step);
-    }
-
-    rafId = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(rafId);
-  }
-
-  /**
-   * Fade out and remove the overlay.
-   */
-  function removeLeafOverlay(overlay) {
-    overlay.classList.remove('is-visible');
-    // Wait for CSS fade-out (320ms) then remove from DOM
-    setTimeout(() => {
-      if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
-    }, 350);
-  }
-
-  /* ─── sendChatMessage with leaf orbit overlay ──────────── */
-
   async function sendChatMessage(message) {
-    if (!message) return;
+    if (!message || !chatLog) return;
     appendMessage('user', message);
 
-    // Disable send button and chips
+    // Show inline LeafLoader in chat
+    const loadingDiv = document.createElement('div');
+    loadingDiv.className = 'p-3 rounded-lg text-sm mr-6';
+    loadingDiv.style.cssText = 'background-color:var(--surface); border:1px solid var(--border); color:var(--text-primary);';
+    loadingDiv.dataset.loadingMsg = 'true';
+
+    const loader = LeafLoader.createInline('Consulting agronomic knowledge base…');
+    loadingDiv.innerHTML = `<span class="text-xs font-bold block mb-1" style="color:var(--primary);">AgriSmart AI Assistant:</span>`;
+    loadingDiv.appendChild(loader);
+    chatLog.appendChild(loadingDiv);
+    chatLog.scrollTop = chatLog.scrollHeight;
+
     if (sendBtn) {
-      sendBtn.disabled = true;
-      sendBtn.setAttribute('aria-busy', 'true');
+      LeafLoader.setButtonLoading(sendBtn, true);
     }
 
-    // Show leaf orbit overlay
-    const { overlay, pctEl } = createLeafOverlay();
-
-    // Phase 1: animate 0 → 72% smoothly while request is in-flight
-    // (72% leaves headroom for the response-received phase)
-    let cancelPhase1 = animatePct(pctEl, 0, 72, 2800);
-
-    let response = null;
-    let requestError = null;
-
     try {
-      response = await API.chatAssistant({
+      const response = await API.chatAssistant({
         session_id: sessionId,
         message:    message,
         context:    getActiveDashboardContext(),
         lang:       currentLang,
       });
+
+      loadingDiv.remove();
+
+      if (response && response.reply) {
+        appendMessage('assistant', response.reply);
+      } else {
+        appendMessage('assistant', 'I could not process that question. Please try asking about crops, soil, irrigation, or weather.');
+      }
     } catch (err) {
-      requestError = err;
-      console.error('Advisory assistant error:', err);
-    }
-
-    // Phase 2: cancel phase-1 animation, read current displayed value,
-    // then animate from wherever we are → 100%
-    cancelPhase1();
-    const currentPct = parseInt(pctEl ? pctEl.textContent : '72', 10) || 72;
-    await new Promise(resolve => {
-      const cancel = animatePct(pctEl, currentPct, 100, 420);
-      setTimeout(() => { cancel(); resolve(); }, 440);
-    });
-
-    // Remove overlay with fade-out
-    removeLeafOverlay(overlay);
-
-    // Re-enable button
-    if (sendBtn) {
-      sendBtn.disabled = false;
-      sendBtn.removeAttribute('aria-busy');
-    }
-
-    // Render result or error
-    if (requestError) {
+      loadingDiv.remove();
       appendMessage('assistant', 'Unable to reach the advisory service. Please check your connection and try again.');
-    } else if (response && response.reply) {
-      appendMessage('assistant', response.reply);
-    } else {
-      appendMessage('assistant', 'I could not process that question. Please try asking about crops, soil, irrigation, or weather.');
+      console.error('Advisory assistant error:', err);
+    } finally {
+      loadingDiv.remove();
+      if (sendBtn) {
+        LeafLoader.setButtonLoading(sendBtn, false);
+      }
     }
   }
 

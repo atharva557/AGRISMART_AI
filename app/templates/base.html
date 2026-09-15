@@ -8,26 +8,78 @@
 
   <title>{% block title %}AgriSmart AI — Agricultural Diagnostics & Advisory{% endblock %}</title>
 
+  <!-- Preconnect to Translation Services -->
+  <link rel="preconnect" href="https://translate.google.com">
+  <link rel="preconnect" href="https://translate.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://translate.googleapis.com">
+  <link rel="dns-prefetch" href="https://translate.google.com">
+
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
 
-  <!-- Resolve the page theme before CSS or visible markup can be painted. -->
+  <!-- Early Language Synchronization (Executes before DOM render to prevent translation lag) -->
   <script>
     (function () {
-      var theme;
       try {
-        theme = localStorage.getItem('agrismart-theme');
+        var lang = localStorage.getItem('agrismart-lang');
+        if (lang && lang !== 'en') {
+          document.cookie = 'googtrans=/en/' + lang + '; path=/; SameSite=Lax';
+          document.cookie = 'googtrans=/en/' + lang + '; domain=' + window.location.hostname + '; path=/; SameSite=Lax';
+        }
       } catch (e) {}
-      if (theme !== 'dark' && theme !== 'light') {
-        theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-          ? 'dark' : 'light';
-      }
-      document.documentElement.classList.toggle('dark', theme === 'dark');
     }());
   </script>
 
   <!-- Compiled CSS (Tailwind + custom components) -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/dist/main.min.css') }}">
+
+  <!-- Google Translate Top Banner & Frame Suppression -->
+  <style>
+    .goog-te-banner-frame.skiptranslate,
+    .goog-te-banner-frame,
+    iframe.goog-te-banner-frame,
+    iframe[id=":1.container"],
+    iframe[id=":2.container"],
+    .VIpgJd-ZVi9od-ORHb-OEVmcd,
+    .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+    .VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc,
+    #goog-gt-tt,
+    .goog-te-balloon-frame,
+    .goog-tooltip,
+    .goog-tooltip:hover {
+      display: none !important;
+      visibility: hidden !important;
+      opacity: 0 !important;
+      height: 0 !important;
+      width: 0 !important;
+      position: absolute !important;
+      top: -9999px !important;
+      left: -9999px !important;
+      pointer-events: none !important;
+    }
+
+    body {
+      top: 0px !important;
+      position: static !important;
+    }
+
+    .goog-text-highlight {
+      background-color: transparent !important;
+      box-shadow: none !important;
+      border: none !important;
+    }
+
+    #google_translate_element {
+      display: none !important;
+    }
+
+    #global-lang-select option,
+    .site-header select option,
+    select option {
+      color: #111827 !important;
+      background-color: #ffffff !important;
+    }
+  </style>
 
   {% block extra_css %}{% endblock %}
 </head>
@@ -46,8 +98,23 @@
   <!-- Footer -->
   {% include 'components/footer.html' %}
 
+  <!-- Hidden Google Translate Element -->
+  <div id="google_translate_element" style="display:none;" aria-hidden="true"></div>
+
   <!-- Core JavaScript bundle — defines window.API, window.UI, window.DOM, etc. -->
   <script src="{{ url_for('static', filename='js/dist/main.min.js') }}"></script>
+
+  <!-- Google Translate Integration Script -->
+  <script>
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'en,hi,gu,mr,ta,te,kn,bn,pa',
+        autoDisplay: false
+      }, 'google_translate_element');
+    }
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 
   {% block extra_js %}{% endblock %}
 </body>

@@ -222,7 +222,7 @@ button {
 .skip-link {
   position: absolute;
   top: -40px;
-  left: 0;
+  left: -9999px;
   background: var(--green-500);
   color: white;
   padding: var(--space-2) var(--space-4);
@@ -232,6 +232,7 @@ button {
 
 .skip-link:focus {
   top: 0;
+  left: 0;
 }
 
 /* Container */

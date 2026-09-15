@@ -58,13 +58,13 @@
           </div>
           <p>Ranks three crop labels using the pinned seven-feature dataset scale. Scores are not calibrated field-suitability probabilities.</p>
           <form id="crop-form" class="input-grid" novalidate aria-label="Crop recommendation inputs">
-            <label>N
+            <label>Nitrogen (N)
               <input name="N" type="number" step="any" value="90" required aria-required="true" aria-label="Nitrogen (N)">
             </label>
-            <label>P
+            <label>Phosphorus (P)
               <input name="P" type="number" step="any" value="42" required aria-required="true" aria-label="Phosphorus (P)">
             </label>
-            <label>K
+            <label>Potassium (K)
               <input name="K" type="number" step="any" value="43" required aria-required="true" aria-label="Potassium (K)">
             </label>
             <label>Temperature &deg;C
@@ -76,8 +76,8 @@
             <label>pH
               <input name="ph" type="number" step="any" value="6.503" required aria-required="true">
             </label>
-            <label>Rainfall (source value)
-              <input name="rainfall" type="number" step="any" value="202.9355" required aria-required="true">
+            <label>Rainfall (mm)
+              <input name="rainfall" type="number" step="any" value="202.9355" required aria-required="true" aria-label="Rainfall in millimetres">
             </label>
             <button type="submit">Rank crop labels</button>
           </form>
@@ -150,6 +150,16 @@
           </div>
           <p>Checks a complete 24-hour Open-Meteo window for rain, heat, cold, wind, humidity, and reference ET₀ conditions.</p>
           <form id="weather-form" class="input-grid" novalidate aria-label="Weather advisory inputs">
+            <div style="grid-column: 1 / -1; margin-bottom: 2px;">
+              <button id="useWeatherLocation" type="button" class="button--secondary" style="width: auto; padding: 7px 14px; font-size: 0.85rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Use my location
+              </button>
+              <p id="weatherLocationStatus" role="status" style="margin: 6px 0 0; font-size: 0.8rem; color: var(--text-muted);"></p>
+            </div>
             <label>Latitude
               <input name="latitude" type="number" min="-90" max="90" step="any" value="18.5204" required aria-required="true">
             </label>

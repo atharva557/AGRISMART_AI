@@ -72,65 +72,7 @@
     --line:   #d4dbd6;
   }
 
-  /* ============================================================
-     DESIGN TOKEN SYSTEM — Dark Mode
-     ============================================================ */
-  html.dark {
-    color-scheme: dark;
 
-    /* Surface & background */
-    --bg:             #0f1a15;
-    --surface:        #1a2a22;
-    --surface-alt:    #1f3328;
-    --surface-raised: #243d2f;
-
-    /* Text */
-    --text-primary:   #e8f0eb;
-    --text-secondary: #a8bdb1;
-    --text-muted:     #7a9488;
-    --text-inverse:   #0f1a15;
-
-    /* Brand / accent */
-    --primary:        #3db87a;
-    --primary-hover:  #4dcf8c;
-    --primary-active: #2ea567;
-    --primary-subtle: #1a3328;
-    --primary-border: #2d5c42;
-
-    /* Lime accent */
-    --lime:           #2a4a1a;
-    --lime-text:      #b8e070;
-
-    /* Borders */
-    --border:         #2d4438;
-    --border-strong:  #3d5c4a;
-
-    /* Status */
-    --success-bg:     #0d2a1c;
-    --success-border: #1d5c38;
-    --success-text:   #7dd5a8;
-    --warning-bg:     #2a1e06;
-    --warning-border: #5c3d0a;
-    --warning-text:   #f0c060;
-    --danger-bg:      #2a0d0d;
-    --danger-border:  #5c1a1a;
-    --danger-text:    #f08080;
-    --info-bg:        #0d1a2a;
-    --info-border:    #1a3a5c;
-    --info-text:      #7ab5e8;
-
-    /* Shadow — more pronounced in dark mode for depth */
-    --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.30);
-    --shadow-md:  0 4px 12px rgba(0, 0, 0, 0.40);
-    --shadow-lg:  0 8px 24px rgba(0, 0, 0, 0.50);
-
-    /* Legacy compat */
-    --green:  #3db87a;
-    --ink:    #e8f0eb;
-    --muted:  #7a9488;
-    --paper:  #1a2a22;
-    --line:   #2d4438;
-  }
 
   /* ── Base element styles ────────────────────────────────── */
   html {
@@ -220,60 +162,6 @@
     background-color: var(--primary-subtle);
   }
 
-  /* ── Theme Toggle — pill shape ─────────────────────────── */
-  .theme-toggle {
-    /* pill container */
-    display: inline-flex;
-    align-items: center;
-    gap: 0;
-    padding: 0.1875rem;
-    background-color: var(--surface-alt);
-    border: 1px solid var(--border);
-    border-radius: 9999px;
-    cursor: pointer;
-    flex-shrink: 0;
-    position: relative;
-    transition: border-color var(--transition-fast), background-color var(--transition-fast);
-  }
-
-  .theme-toggle:hover {
-    border-color: var(--primary-border);
-  }
-
-  .theme-toggle:focus-visible {
-    outline: 2px solid var(--primary);
-    outline-offset: 2px;
-    border-radius: 9999px;
-  }
-
-  /* Each option slot inside the pill */
-  .theme-toggle__option {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 9999px;
-    font-size: 1rem;
-    line-height: 1;
-    transition: background-color 250ms ease, box-shadow 250ms ease;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* Select the correct slot directly from the theme resolved in <head>. */
-  html:not(.dark) #theme-opt-light,
-  html.dark #theme-opt-dark {
-    background-color: var(--primary-subtle);
-    box-shadow: 0 0 0 1px var(--primary-border);
-  }
-
-  /* Inactive slot — transparent */
-  html:not(.dark) #theme-opt-dark,
-  html.dark #theme-opt-light {
-    background-color: transparent;
-    opacity: 0.45;
-  }
 
   /* ── Brand ──────────────────────────────────────────────── */
   .brand-link {
@@ -300,6 +188,51 @@
     color: var(--text-muted);
     line-height: 1;
     font-weight: 500;
+  }
+
+  /* ── Google Translate & Language Selector ───────────────────── */
+  .goog-te-banner-frame.skiptranslate,
+  .goog-te-banner-frame,
+  iframe.goog-te-banner-frame,
+  iframe[id=":1.container"],
+  iframe[id=":2.container"],
+  .VIpgJd-ZVi9od-ORHb-OEVmcd,
+  .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+  .VIpgJd-ZVi9od-aZ2wEe-wOHMyf-ti6hGc,
+  #goog-gt-tt,
+  .goog-te-balloon-frame,
+  .goog-tooltip,
+  .goog-tooltip:hover {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+    pointer-events: none !important;
+  }
+
+  body {
+    top: 0px !important;
+    position: static !important;
+  }
+
+  .goog-text-highlight {
+    background-color: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  #google_translate_element {
+    display: none !important;
+  }
+
+  #global-lang-select option,
+  .site-header select option {
+    color: #111827 !important;
+    background-color: #ffffff !important;
   }
 
   /* ── Cards ──────────────────────────────────────────────── */
@@ -885,7 +818,7 @@
   .skip-link {
     position: absolute;
     top: -2.5rem;
-    left: 0;
+    left: -9999px;
     background-color: var(--primary);
     color: #ffffff;
     padding: 0.5rem 1rem;
@@ -894,7 +827,7 @@
     font-weight: 600;
   }
 
-  .skip-link:focus { top: 0; }
+  .skip-link:focus { top: 0; left: 0; }
 
   .sr-only {
     position: absolute;
@@ -943,148 +876,6 @@
     to   { transform: rotate(360deg); }
   }}
 
-/* Initial rendering must not animate from browser defaults or the wrong theme. */
-html:not(.theme-loaded) *,
-html:not(.theme-loaded) *::before,
-html:not(.theme-loaded) *::after {
-  transition: none !important;
-}
-
-/* ============================================================
-   DARK MODE — Tailwind overrides for inline Tailwind classes
-   (Handles the parts of templates that use Tailwind directly)
-   ============================================================ */
-
-/* Page backgrounds */
-html.dark .bg-gray-100  { background-color: var(--bg) !important; }
-html.dark .bg-white     { background-color: var(--surface) !important; }
-html.dark .bg-gray-50   { background-color: var(--surface-alt) !important; }
-
-/* Text */
-html.dark .text-gray-900 { color: var(--text-primary) !important; }
-html.dark .text-gray-800 { color: var(--text-primary) !important; }
-html.dark .text-gray-700 { color: var(--text-secondary) !important; }
-html.dark .text-gray-600 { color: var(--text-muted) !important; }
-html.dark .text-gray-500 { color: var(--text-muted) !important; }
-
-/* Borders */
-html.dark .border-gray-100 { border-color: var(--border) !important; }
-html.dark .border-gray-200 { border-color: var(--border) !important; }
-html.dark .border-gray-300 { border-color: var(--border-strong) !important; }
-
-/* Hover states */
-html.dark .hover\:bg-green-50:hover { background-color: var(--primary-subtle) !important; }
-html.dark .hover\:text-green-600:hover { color: var(--primary) !important; }
-html.dark .hover\:text-green-700:hover { color: var(--primary-hover) !important; }
-html.dark .hover\:shadow-lg:hover { box-shadow: var(--shadow-lg) !important; }
-
-/* Green accents */
-html.dark .text-green-600 { color: var(--primary) !important; }
-html.dark .text-green-700 { color: var(--primary) !important; }
-html.dark .bg-green-100   { background-color: var(--primary-subtle) !important; }
-html.dark .text-green-700.bg-green-100 { color: var(--primary) !important; }
-
-/* Cards / articles in dark mode */
-html.dark article.card {
-  background-color: var(--surface);
-  border-color: var(--border);
-}
-
-/* Header specific */
-html.dark header.bg-white {
-  background-color: var(--surface) !important;
-  border-color: var(--border) !important;
-}
-
-html.dark .text-gray-700.hover\:text-green-600 {
-  color: var(--text-secondary) !important;
-}
-
-/* Footer */
-html.dark footer.bg-white,
-html.dark .site-footer {
-  background-color: var(--surface) !important;
-  border-color: var(--border) !important;
-}
-
-html.dark footer .text-gray-900 { color: var(--text-primary) !important; }
-html.dark footer .text-gray-600 { color: var(--text-muted) !important; }
-html.dark footer .text-gray-500 { color: var(--text-muted) !important; }
-html.dark footer .border-gray-200 { border-color: var(--border) !important; }
-html.dark footer .border-t { border-color: var(--border) !important; }
-
-/* Feature section background */
-html.dark section.bg-gray-100 { background-color: var(--bg) !important; }
-html.dark section.bg-white    { background-color: var(--surface) !important; }
-
-/* Feature cards */
-html.dark .card.bg-gray-50 { background-color: var(--surface-alt) !important; }
-
-/* Advisory scope notice */
-html.dark .bg-blue-50  { background-color: var(--info-bg) !important; }
-html.dark .border-blue-200 { border-color: var(--info-border) !important; }
-html.dark .text-blue-900   { color: var(--info-text) !important; }
-html.dark .text-blue-800   { color: var(--info-text) !important; }
-html.dark .text-blue-600   { color: var(--info-text) !important; }
-
-/* Amber warning blocks */
-html.dark .bg-amber-50      { background-color: var(--warning-bg) !important; }
-html.dark .border-amber-200 { border-color: var(--warning-border) !important; }
-html.dark .text-amber-700   { color: var(--warning-text) !important; }
-html.dark .text-amber-800   { color: var(--warning-text) !important; }
-
-/* Yellow warning blocks */
-html.dark .bg-yellow-50      { background-color: var(--warning-bg) !important; }
-html.dark .border-yellow-200 { border-color: var(--warning-border) !important; }
-html.dark .text-yellow-900   { color: var(--warning-text) !important; }
-html.dark .text-yellow-800   { color: var(--warning-text) !important; }
-
-/* About page: responsible use block */
-html.dark .bg-red-50     { background-color: var(--danger-bg) !important; }
-html.dark .border-red-200 { border-color: var(--danger-border) !important; }
-html.dark .text-red-900  { color: var(--danger-text) !important; }
-html.dark .text-red-800  { color: var(--danger-text) !important; }
-html.dark .text-red-600  { color: var(--danger-text) !important; }
-
-/* About page: metric stat blocks */
-html.dark .bg-green-50  { background-color: var(--primary-subtle) !important; }
-html.dark .text-green-700.text-2xl { color: var(--primary) !important; }
-
-/* Hero primary CTA must stay high-contrast against the dark image overlay. */
-html.dark .hero-btn-primary {
-  background-color: #ffffff !important;
-  color: #14532d !important;
-}
-html.dark .hero-btn-primary:hover {
-  background-color: #f0fdf4 !important;
-  color: #14532d !important;
-}
-
-/* About page: technical / resources blocks */
-html.dark .bg-gray-50.rounded-lg { background-color: var(--surface-alt) !important; }
-html.dark .border-b.border-gray-200 { border-color: var(--border) !important; }
-
-/* Disease upload page */
-html.dark .border-dashed.border-gray-300 {
-  border-color: var(--border-strong) !important;
-}
-html.dark .hover\:border-green-400:hover {
-  border-color: var(--primary) !important;
-}
-html.dark .text-gray-400 { color: var(--text-muted) !important; }
-
-/* Mobile menu */
-html.dark #mobile-menu {
-  background-color: var(--surface);
-  border-color: var(--border);
-}
-html.dark .border-t.border-gray-100 { border-color: var(--border) !important; }
-
-/* Modals */
-html.dark .bg-white.rounded-lg {
-  background-color: var(--surface);
-  border: 1px solid var(--border);
-}
 
 /* ============================================================
    RESPONSIVE

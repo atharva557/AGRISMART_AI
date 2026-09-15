@@ -74,7 +74,7 @@ logger = logging.getLogger(__name__)
 
 # Accept either GEMINI_API_KEY (canonical) or ASSISTANT_API_KEY (team convention)
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY") or os.environ.get("ASSISTANT_API_KEY")
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
 # ^ Set GEMINI_MODEL in your .env if Google has published a newer model
 #   string by the time you're building — check https://ai.google.dev/gemini-api/docs/models
 #   for the current list rather than trusting any single hardcoded default.
