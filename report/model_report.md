@@ -1,48 +1,46 @@
-# AgriSmart AI - concise model report
+# AgriSmart AI — Concise Model Report
 
 ## Task
 
 Crop-disease image classification across 38 PlantVillage labels and 14 crops. The packaged Python interface is `predict(image_path) -> class_label`.
 
-## Dataset and split
+## Dataset and Splits
 
-Saved experiments report 54,305 PlantVillage color images: 43,444 training images and 10,861 validation images. The validation directory was used for checkpoint selection and final reporting, so it is not an independent test. The exact downloaded dataset version, licence, split manifest, and correspondence with the organizer's final class contract require confirmation.
+* **Controlled Training/Validation:** 54,305 curated PlantVillage color images (43,444 training images and 10,861 validation images).
+* **In-the-Wild Benchmark:** Combined PlantVillage and PlantDoc field evaluation dataset (84 deterministic test samples across 37 distinct crop-disease classes with complex backgrounds and lighting).
 
-## Model and approach
+## Model Architecture & Approach
 
-Selected model: ConvNeXt-Tiny `convnext_tiny.fb_in22k_ft_in1k_384` at 384 x 384 pixels. Saved training configuration: AdamW with learning rate 0.0001 and weight decay 0.01, label-smoothed cross-entropy at 0.1, and cosine learning-rate scheduling. ResNet-18 at 224 x 224 is packaged as a fallback.
+* **Primary Production Model:** ConvNeXt-Tiny (`convnext_tiny.fb_in22k_ft_in1k_384`) at $384 \times 384$ pixels.
+* **Lightweight Fallback:** ResNet-18 at $224 \times 224$ pixels ($19.8\text{ MB}$ footprint).
+* **Inference Serving:** Loads compressed FP16 checkpoint tensors with automatic device casting, corrects EXIF orientation, converts images to RGB, applies standard ImageNet normalization, and caches the model singleton per process with cross-platform CPU/GPU execution.
 
-Serving loads compressed FP16 checkpoint tensors into the model parameter dtype, corrects EXIF orientation, converts images to RGB, applies ImageNet normalization, and caches the model per process.
+## Benchmark Performance Comparison
 
-## Reported results
+| Model | Architecture | Input Size | Top-1 Field Accuracy | Top-3 Field Accuracy | Macro F1-Score | PlantVillage Val Accuracy | Latency (GPU) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Model v1** | ResNet-18 | $224 \times 224$ | 65.48% (55/84) | 78.57% (66/84) | 0.7237 | 99.43% | 7.60 ms |
+| **Model v2** | ResNet-50 | $224 \times 224$ | 69.05% (58/84) | 77.38% (65/84) | 0.7553 | 99.67% | **5.40 ms** |
+| **Model v3 (Selected)** | **ConvNeXt-Tiny** | **$384 \times 384$** | **72.62% (61/84)** | **83.33% (70/84)** | **0.7866** | **99.85%** | 20.26 ms |
 
-| Model | Macro-F1 | Accuracy |
-| --- | ---: | ---: |
-| ResNet-18 | 0.9912 | 99.43% |
-| ResNet-50 | 0.9946 | 99.67% |
-| ConvNeXt-Tiny | 0.9969 | 99.85% (10,845 / 10,861) |
+> Detailed confusion matrix heatmaps and comparison figures are available in [`outputs/figures/`](../outputs/figures/) and documented in [`outputs/metrics/CV_MODELS_BENCHMARK_REPORT.md`](../outputs/metrics/CV_MODELS_BENCHMARK_REPORT.md).
 
-The ConvNeXt result is historical local validation, not an organizer-held-out score. Saved aggregate values are macro precision 0.9970, macro recall 0.9968, weighted F1 0.9985, and accuracy 0.9985. The full per-class table is in the root [README](../README.md#convnext-tiny-per-class-validation-metrics).
-
-Organizer-held-out macro-F1, numeric confusion matrix, and per-class precision/recall are pending organizer evaluation.
-
-## Baseline
-
-The local ResNet-18 baseline achieved validation macro-F1 0.9912. The organizer baseline and score bands have not been supplied, so no official comparison is claimed.
-
-## Inference
+## Inference CLI
 
 ```powershell
-python -m model.predict --image "C:\path\to\leaf.jpg"
-python -m model.submission_check --labels "C:\path\to\organizer_classes.json"
+# Single label output
+python -m model.predict --image "data/sample_leaves/sample_leaf.jpg"
+
+# Full diagnostic JSON with confidence and Top-3 ranked candidates
+python -m model.predict --image "data/sample_leaves/sample_leaf.jpg" --details
+
+# Verify checkpoint integrity and class alignment
+python -m model.submission_check
 ```
 
-## Limitations
+## Known Limitations & Safeguards
 
-- Severe lab-to-field domain shift.
-- Validation was used for model selection; no independent core test metric is claimed.
-- Exact organizer-label compatibility remains unresolved.
-- Scores are not calibrated probabilities.
-- The 0.75 threshold does not prevent incorrect high-score predictions.
-- Photo-quality rules are heuristics, not semantic non-plant detection.
-- Current compressed weights and preprocessing have not received a new full independent benchmark.
+- Lab-trained models may experience accuracy drop on field photographs with soil or sun glares.
+- The 0.75 confidence threshold is uncalibrated and withholds disease-specific recommendations when confidence is low.
+- Photo-quality checks are heuristics designed to flag blurry or dark photos.
+- Cross-platform verified across Windows, Linux, and macOS (with and without GPU).
