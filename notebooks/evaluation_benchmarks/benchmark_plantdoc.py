@@ -1,8 +1,10 @@
 ﻿import os
 import time
 import pickle
+import gzip
 import json
 import requests
+from pathlib import Path
 from PIL import Image
 import torch
 import torch.nn as nn
@@ -10,8 +12,10 @@ import torch.nn.functional as F
 from torchvision import models, transforms
 import timm
 
-IMG_DIR = r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\test_images_external_datasets"
-os.makedirs(IMG_DIR, exist_ok=True)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+IMG_DIR = PROJECT_ROOT / "notebooks" / "evaluation_benchmarks" / "test_images_external_datasets"
+IMG_DIR.mkdir(parents=True, exist_ok=True)
+INCLUDE_TRAIN_FALLBACK = False
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
@@ -51,8 +55,9 @@ headers = {'User-Agent': 'Mozilla/5.0'}
 base_api = "https://api.github.com/repos/pratikkayal/PlantDoc-Dataset/contents/test"
 
 print("Fetching external in-the-wild dataset files (PlantDoc)...")
-r = requests.get(base_api, headers=headers)
-folders = r.json()
+r = requests.get(base_api, headers=headers, timeout=30)
+r.raise_for_status()
+folders = sorted(r.json(), key=lambda item: item["name"])
 
 target_count = 50
 downloaded_manifest = []
@@ -68,10 +73,13 @@ for folder in folders:
     mapped_gt = LABEL_MAPPING[folder_name]
     folder_url = folder['url']
     
-    fr = requests.get(folder_url, headers=headers)
+    fr = requests.get(folder_url, headers=headers, timeout=30)
     if fr.status_code != 200:
         continue
-    files = [f for f in fr.json() if f['name'].lower().endswith(('.jpg', '.jpeg', '.png'))]
+    files = sorted(
+        [f for f in fr.json() if f['name'].lower().endswith(('.jpg', '.jpeg', '.png'))],
+        key=lambda item: item["name"],
+    )
     
     # Take up to 2 images per category to reach 50
     take = min(len(files), 2)
@@ -85,7 +93,9 @@ for folder in folders:
         save_path = os.path.join(IMG_DIR, filename)
         
         try:
-            img_data = requests.get(img_url, headers=headers).content
+            image_response = requests.get(img_url, headers=headers, timeout=30)
+            image_response.raise_for_status()
+            img_data = image_response.content
             with open(save_path, "wb") as f:
                 f.write(img_data)
             
@@ -98,6 +108,8 @@ for folder in folders:
                 "filename": filename,
                 "path": save_path,
                 "dataset_source": "PlantDoc (In-the-Wild / Field Condition)",
+                "source_split": "test",
+                "source_url": img_url,
                 "raw_label": folder_name,
                 "ground_truth": mapped_gt
             })
@@ -108,10 +120,10 @@ for folder in folders:
                 os.remove(save_path)
             continue
 
-# If still short of 50, fetch additional from train folder of PlantDoc
-if count < target_count:
+# Historical runs enabled this fallback. Keep it disabled for held-out evaluation.
+if INCLUDE_TRAIN_FALLBACK and count < target_count:
     train_api = "https://api.github.com/repos/pratikkayal/PlantDoc-Dataset/contents/train"
-    tr_r = requests.get(train_api, headers=headers)
+    tr_r = requests.get(train_api, headers=headers, timeout=30)
     if tr_r.status_code == 200:
         for folder in tr_r.json():
             if count >= target_count:
@@ -120,10 +132,13 @@ if count < target_count:
             if folder_name not in LABEL_MAPPING:
                 continue
             mapped_gt = LABEL_MAPPING[folder_name]
-            fr = requests.get(folder['url'], headers=headers)
+            fr = requests.get(folder['url'], headers=headers, timeout=30)
             if fr.status_code != 200:
                 continue
-            files = [f for f in fr.json() if f['name'].lower().endswith(('.jpg', '.jpeg', '.png'))]
+            files = sorted(
+                [f for f in fr.json() if f['name'].lower().endswith(('.jpg', '.jpeg', '.png'))],
+                key=lambda item: item["name"],
+            )
             for f_info in files[:2]:
                 if count >= target_count:
                     break
@@ -131,7 +146,9 @@ if count < target_count:
                 filename = f"{count+1:02d}_{folder_name.replace(' ', '_')}_train.jpg"
                 save_path = os.path.join(IMG_DIR, filename)
                 try:
-                    img_data = requests.get(img_url, headers=headers).content
+                    image_response = requests.get(img_url, headers=headers, timeout=30)
+                    image_response.raise_for_status()
+                    img_data = image_response.content
                     with open(save_path, "wb") as f:
                         f.write(img_data)
                     with Image.open(save_path) as test_im:
@@ -141,6 +158,8 @@ if count < target_count:
                         "filename": filename,
                         "path": save_path,
                         "dataset_source": "PlantDoc (In-the-Wild / Field Condition)",
+                        "source_split": "train",
+                        "source_url": img_url,
                         "raw_label": folder_name,
                         "ground_truth": mapped_gt
                     })
@@ -155,7 +174,8 @@ print(f"\nSuccessfully collected {len(downloaded_manifest)} external field image
 
 # 2. Model Loading
 def load_bundle(pkl_path):
-    with open(pkl_path, "rb") as f:
+    opener = gzip.open if str(pkl_path).endswith(".gz") else open
+    with opener(pkl_path, "rb") as f:
         bundle = pickle.load(f)
     arch = bundle["architecture"].lower()
     num_classes = bundle["num_classes"]
@@ -177,9 +197,9 @@ def load_bundle(pkl_path):
     return model, bundle
 
 MODELS_CONFIG = {
-    "v1_ResNet18": r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\model_v1.pkl",
-    "v2_ResNet50": r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\model_v2.pkl",
-    "v3_ConvNeXtTiny": r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\model_v3.pkl"
+    "v1_ResNet18": PROJECT_ROOT / "model" / "weights" / "cv" / "model_v1.pkl.gz",
+    "v2_ResNet50": PROJECT_ROOT / "model" / "weights" / "cv" / "model_v2.pkl.gz",
+    "v3_ConvNeXtTiny": PROJECT_ROOT / "model" / "weights" / "cv" / "model_v3.pkl.gz",
 }
 
 loaded_models = {}
@@ -284,9 +304,13 @@ summary_lines = []
 summary_lines.append("AgriSmart AI — External Dataset (In-the-Wild) Cross-Evaluation Report")
 summary_lines.append(f"Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 summary_lines.append(f"Source Dataset: PlantDoc (In-the-Field / Complex Backgrounds)")
-summary_lines.append(f"Total Test Images: {total_samples}\n")
+summary_lines.append(f"Total Evaluated Images: {total_samples}")
+summary_lines.append("Sampling: deterministic convenience sample from PlantDoc test directories only; not an official benchmark.\n")
 
-header_table = f"{'Model Architecture':<18} | {'Top-1 Acc':<10} | {'Top-3 Acc':<10} | {'Mean Conf':<11} | {'Safe Gate (<75%)':<16} | {'Avg Latency':<12}"
+if total_samples == 0:
+    raise RuntimeError("No compatible PlantDoc test images were downloaded; no metrics can be computed.")
+
+header_table = f"{'Model Architecture':<18} | {'Top-1 Acc':<10} | {'Top-3 Acc':<10} | {'Mean Conf':<11} | {'Flagged (<75%)':<16} | {'Avg Latency':<12}"
 summary_lines.append("="*len(header_table))
 summary_lines.append(header_table)
 summary_lines.append("="*len(header_table))
@@ -308,7 +332,8 @@ report_text = "\n".join(summary_lines)
 print("\n" + report_text)
 
 # Save Report File
-report_file = r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\model_summary_external_benchmark.txt"
+report_file = PROJECT_ROOT / "notebooks" / "evaluation_benchmarks" / "model_summaries" / "model_summary_external_benchmark.txt"
+report_file.parent.mkdir(parents=True, exist_ok=True)
 with open(report_file, "w", encoding="utf-8") as f:
     f.write(report_text)
 print(f"\nReport saved to: {report_file}")

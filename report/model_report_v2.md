@@ -1,7 +1,9 @@
 ﻿# Model Report: Model v2 — Enhanced ResNet-50
 
+> **Historical experiment record.** Use [`model_report.md`](model_report.md) for submission. These values come from saved notebook outputs and were not reproduced for the currently packaged compressed checkpoint.
+
 **Version:** 2.0 (Label Smoothing & Stronger Augmentation)  
-**File Checkpoint:** `notebooks/cv_model_notebooks/model_v2.pkl` (90.3 MB)  
+**Historical Checkpoint:** `model_v2.pkl` (90.3 MB uncompressed); current packaged path is `model/weights/cv/model_v2.pkl.gz`.
 **Evaluation Standard:** SIH 2026 Section 7.3 One-Page Model Report
 
 ---
@@ -11,11 +13,11 @@
 | Field | Specification / Value |
 | :--- | :--- |
 | **Task** | Multiclass crop-disease image classification across **38 classes** (14 crop types). |
-| **Dataset & Split** | **PlantVillage Dataset** (Color, leaf specimen imagery, CC0 License).<br>• Total Images: **54,305**<br>• Train Set: **43,444 images** (80.0%)<br>• Validation Set: **10,861 images** (20.0%) |
-| **Model / Approach** | • **Architecture:** ResNet-50 (Deeper residual capacity)<br>• **Input Resolution:** $224 \times 224 \text{ px}$<br>• **Loss Function:** Label-Smoothed Cross-Entropy ($\alpha = 0.1$)<br>• **Augmentations:** Random Perspective (0.2), Color Jitter, Random Rotation ($20^\circ$), Random Resized Crop<br>• **Optimizer:** Adam ($\text{lr} = 10^{-4}$)<br>• **Batch Size & Epochs:** Batch Size = 32, Trained for 10 Epochs (Best: Epoch 8) |
+| **Dataset & Split** | Reported PlantVillage color dataset; exact source version and license confirmation are pending.<br>• Total Images: **54,305**<br>• Train Set: **43,444 images** (80.0%)<br>• Validation Set: **10,861 images** (20.0%)<br>• Validation was used for checkpoint selection and is not an independent test. |
+| **Model / Approach** | • **Architecture:** ResNet-50 (Deeper residual capacity)<br>• **Input Resolution:** $224 \times 224 \text{ px}$<br>• **Loss Function:** Label-Smoothed Cross-Entropy ($\alpha = 0.1$)<br>• **Augmentations:** Random Perspective (0.2), Color Jitter, Random Rotation ($20^\circ$), Random Resized Crop<br>• **Optimizer:** Adam ($\text{lr} = 10^{-4}$)<br>• **Batch Size & Epochs:** Batch Size = 32, Trained for 10 Epochs (Best: Epoch 9) |
 | **Metric & Result** | • **Macro-F1 (Primary Metric): 0.9946**<br>• **Top-1 Validation Accuracy: 99.67% (10,825 / 10,861)**<br>• **Macro Precision:** 0.9940 \| **Macro Recall:** 0.9950<br>• **Average GPU Latency:** 5.36 ms / image (Fastest inference throughput) |
-| **Baseline Comparison** | **+0.34% Macro-F1 improvement over v1 baseline** (0.9946 vs 0.9912). Improved Corn Cercospora F1 from 0.9020 to 0.9240. Label smoothing successfully eliminated uncalibrated probability spikes. |
-| **Limitations & Failure Cases** | • **Weakest Classes:** Corn Cercospora Leaf Spot (F1: 0.9240), Corn Northern Leaf Blight (F1: 0.9590), Potato Healthy (F1: 0.9840).<br>• **Resolution Bottleneck:** 224px resolution still loses micro-spot texture on dense leaf blights.<br>• **Domain Shift (PlantDoc Test):** Achieved **23.5% Top-1** and **44.1% Top-3** on unsegmented field images. |
+| **Baseline Comparison** | **+0.34 percentage points Macro-F1 over v1** (0.9946 vs 0.9912). Corn Cercospora F1 rose from 0.9020 to 0.9240. Calibration was not measured, so no probability-calibration improvement is claimed. |
+| **Limitations & Failure Cases** | • **Weakest Classes:** Corn Cercospora Leaf Spot (F1: 0.9240), Corn Northern Leaf Blight (F1: 0.9590), Potato Healthy (F1: 0.9840).<br>• **Resolution Bottleneck:** 224px may lose fine lesion detail.<br>• **Domain Shift:** A 34-image PlantDoc convenience sample produced **23.5%** top-1 and **44.1%** top-3. The sample is too small and its historical script could use both train and test directories, so it is not a clean held-out benchmark. |
 
 ---
 

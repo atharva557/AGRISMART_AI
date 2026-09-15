@@ -1,5 +1,7 @@
 ﻿# AgriSmart AI — Model Report (One-Page Summary)
 
+> **Historical experiment record.** Use [`model_report.md`](model_report.md) for submission. These values come from saved notebook outputs and were not reproduced for the currently packaged compressed checkpoint.
+
 **Document Version:** 1.0  
 **Generated:** 2026-09-11  
 **Project:** AgriSmart AI (Plant Pathology & Smart Agricultural Advisory)
@@ -11,11 +13,11 @@
 | Field | Description / Measurement |
 | :--- | :--- |
 | **Task** | Multiclass Crop Disease Image Classification across **38 plant-pathology classes** (14 crop species: Apple, Blueberry, Cherry, Corn, Grape, Orange, Peach, Bell Pepper, Potato, Raspberry, Soybean, Squash, Strawberry, Tomato). |
-| **Dataset & Split** | **PlantVillage Dataset** (Color, leaf specimen imagery, CC0/Public Domain).<br>• Total images: **54,305**<br>• Train set: **43,444 images** (80.0%)<br>• Validation set: **10,861 images** (20.0%)<br>• Stratified per-class split matching official benchmark split. |
+| **Dataset & Split** | Reported PlantVillage color dataset; exact source version, license, and kickoff correspondence are pending.<br>• Total images: **54,305**<br>• Train set: **43,444 images** (80.0%)<br>• Validation set: **10,861 images** (20.0%)<br>• The notebooks consume pre-existing train/validation folders; they do not establish that this is an official or independently held-out split. |
 | **Model / Approach** | **Champion Model (v3): ConvNeXt-Tiny** (`convnext_tiny.fb_in22k_ft_in1k_384`)<br>• Input Resolution: **384 × 384 px** (resolves micro-lesions and vein textures)<br>• Optimizer: AdamW ($\text{lr}=10^{-4}$, weight decay $=0.01$)<br>• Loss: Label Smoothed Cross-Entropy ($\alpha=0.1$ to prevent overconfidence)<br>• Scheduler: CosineAnnealingLR ($T_{\max}=10$, $\eta_{\min}=10^{-6}$)<br>• Hardware Optimization: PyTorch FP16 Automatic Mixed Precision (AMP) on CUDA |
 | **Metric & Result** | **Macro-F1 (Primary Metric): 0.9969**<br>**Top-1 Accuracy: 99.85% (10,845 / 10,861 correct)**<br>• Weighted F1: 0.9985 \| Macro Precision: 0.9970 \| Macro Recall: 0.9968<br>• 33 out of 38 classes achieved **F1 > 0.9900**.<br>• Lowest class F1: Corn Cercospora Leaf Spot (0.9608). |
 | **Baseline & Progression** | • **Baseline (v1, ResNet-18, 224px):** Macro-F1 = **0.9912**, Accuracy = **99.43%**<br>• **Iteration 2 (v2, ResNet-50, 224px, Label Smoothing):** Macro-F1 = **0.9946**, Accuracy = **99.67%**<br>• **Champion (v3, ConvNeXt-Tiny, 384px):** Macro-F1 = **0.9969**, Accuracy = **99.85%** *(+0.57% Macro-F1 over baseline; cuts error rate by 74%)*. |
-| **Limitations & Failure Cases** | **1. Lab-to-Field Domain Shift (Evaluated on PlantDoc in-the-wild dataset):**<br>Models trained on uniform lab backgrounds experience accuracy degradation when presented with unsegmented outdoor field photos containing background soil, intense sunlight, or multiple leaves.<br>**2. Mitigation Implemented:**<br>• **75% Confidence Floor Gate:** Successfully traps and flags 44.1%–58.8% of uncertain out-of-distribution inputs as *"Low Confidence / Don't Know"* instead of making erroneous diagnoses.<br>• ConvNeXt-Tiny (384px) exhibited >2× the out-of-distribution accuracy of ResNet-18 (32.4% vs 14.7% top-1, 58.8% top-3). |
+| **Limitations & Failure Cases** | **1. Lab-to-Field Domain Shift:** A 34-image PlantDoc convenience sample produced much lower results than lab validation.<br>**2. Confidence flag:** A 0.75 threshold flagged 44.1%–58.8% of sample predictions, depending on model. Scores were not calibrated, so this does not demonstrate that incorrect diagnoses are reliably withheld.<br>• ConvNeXt-Tiny produced 32.4% top-1 and 58.8% top-3 on this sample; ResNet-18 produced 14.7% top-1. The historical script could draw from both PlantDoc test and train directories, so the sample is not a clean held-out benchmark. |
 
 ---
 

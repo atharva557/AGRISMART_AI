@@ -1,7 +1,9 @@
 ﻿import os
 import time
 import pickle
+import gzip
 import requests
+from pathlib import Path
 from PIL import Image
 import torch
 import torch.nn as nn
@@ -9,8 +11,9 @@ import torch.nn.functional as F
 from torchvision import models, transforms
 import timm
 
-IMG_DIR = r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\test_images"
-os.makedirs(IMG_DIR, exist_ok=True)
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+IMG_DIR = PROJECT_ROOT / "notebooks" / "evaluation_benchmarks" / "test_images"
+IMG_DIR.mkdir(parents=True, exist_ok=True)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {DEVICE}")
@@ -19,9 +22,10 @@ print(f"Using device: {DEVICE}")
 headers = {'User-Agent': 'Mozilla/5.0'}
 base_api = "https://api.github.com/repos/spMohanty/PlantVillage-Dataset/contents/raw/color"
 
-print("Fetching folder structure from PlantVillage web repository...")
-r = requests.get(base_api, headers=headers)
-folders = r.json()
+print("Fetching a source-domain PlantVillage smoke-test sample...")
+r = requests.get(base_api, headers=headers, timeout=30)
+r.raise_for_status()
+folders = sorted(r.json(), key=lambda item: item["name"])
 
 target_count = 50
 downloaded_manifest = []
@@ -37,10 +41,13 @@ for folder in folders:
     folder_name = folder['name']
     folder_url = folder['url']
     
-    fr = requests.get(folder_url, headers=headers)
+    fr = requests.get(folder_url, headers=headers, timeout=30)
     if fr.status_code != 200:
         continue
-    files = [f for f in fr.json() if f['name'].lower().endswith(('.jpg', '.jpeg', '.png'))]
+    files = sorted(
+        [f for f in fr.json() if f['name'].lower().endswith(('.jpg', '.jpeg', '.png'))],
+        key=lambda item: item["name"],
+    )
     
     # Pick 1 or 2 images per category
     take = 2 if count + len(folders) - folders.index(folder) <= target_count else 1
@@ -54,7 +61,9 @@ for folder in folders:
         save_path = os.path.join(IMG_DIR, filename)
         
         # Download image
-        img_data = requests.get(img_url, headers=headers).content
+        image_response = requests.get(img_url, headers=headers, timeout=30)
+        image_response.raise_for_status()
+        img_data = image_response.content
         with open(save_path, "wb") as f:
             f.write(img_data)
         
@@ -71,7 +80,8 @@ print(f"\nSuccessfully downloaded {len(downloaded_manifest)} images to {IMG_DIR}
 
 # 2. Model Loading Function
 def load_bundle(pkl_path):
-    with open(pkl_path, "rb") as f:
+    opener = gzip.open if str(pkl_path).endswith(".gz") else open
+    with opener(pkl_path, "rb") as f:
         bundle = pickle.load(f)
     arch = bundle["architecture"].lower()
     num_classes = bundle["num_classes"]
@@ -93,9 +103,9 @@ def load_bundle(pkl_path):
     return model, bundle
 
 MODELS_CONFIG = {
-    "v1_ResNet18": r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\model_v1.pkl",
-    "v2_ResNet50": r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\model_v2.pkl",
-    "v3_ConvNeXtTiny": r"D:\Shlok\Code\AGRISMART_AI\notebooks\cv_model_notebooks\model_v3.pkl"
+    "v1_ResNet18": PROJECT_ROOT / "model" / "weights" / "cv" / "model_v1.pkl.gz",
+    "v2_ResNet50": PROJECT_ROOT / "model" / "weights" / "cv" / "model_v2.pkl.gz",
+    "v3_ConvNeXtTiny": PROJECT_ROOT / "model" / "weights" / "cv" / "model_v3.pkl.gz",
 }
 
 loaded_models = {}
@@ -133,7 +143,7 @@ def predict(image_path, model, bundle):
 # 4. Evaluation Loop
 results = {name: {"correct": 0, "total_latency": 0.0, "total_conf": 0.0, "predictions": []} for name in MODELS_CONFIG}
 
-print("\n--- Running Evaluation on 50 Test Images ---")
+print(f"\n--- Running source-domain smoke test on {len(downloaded_manifest)} images ---")
 for item in downloaded_manifest:
     img_id = item["id"]
     gt = item["ground_truth"]
@@ -167,10 +177,14 @@ print("\n" + "="*80)
 print(f"{'Model Architecture':<22} | {'Accuracy':<10} | {'Mean Confidence':<18} | {'Avg Latency (ms)':<16}")
 print("="*80)
 
+total_samples = len(downloaded_manifest)
+if total_samples == 0:
+    raise RuntimeError("No PlantVillage images were downloaded; no metrics can be computed.")
+
 for m_name in MODELS_CONFIG:
-    acc = (results[m_name]["correct"] / target_count) * 100
-    mean_conf = (results[m_name]["total_conf"] / target_count) * 100
-    avg_lat = results[m_name]["total_latency"] / target_count
-    print(f"{m_name:<22} | {acc:.1f}% ({results[m_name]['correct']}/{target_count}) | {mean_conf:.2f}%{'':<11} | {avg_lat:.2f} ms")
+    acc = (results[m_name]["correct"] / total_samples) * 100
+    mean_conf = (results[m_name]["total_conf"] / total_samples) * 100
+    avg_lat = results[m_name]["total_latency"] / total_samples
+    print(f"{m_name:<22} | {acc:.1f}% ({results[m_name]['correct']}/{total_samples}) | {mean_conf:.2f}%{'':<11} | {avg_lat:.2f} ms")
 
 print("="*80)

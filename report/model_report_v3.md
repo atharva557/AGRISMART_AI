@@ -1,7 +1,9 @@
 ﻿# Model Report: Model v3 — Champion ConvNeXt-Tiny (384px)
 
-**Version:** 3.0 (Champion SOTA Architecture)  
-**File Checkpoint:** `notebooks/cv_model_notebooks/model_v3.pkl` (106.3 MB)  
+> **Historical experiment record.** Use [`model_report.md`](model_report.md) for submission. These values come from saved notebook outputs and were not reproduced for the currently packaged compressed checkpoint.
+
+**Version:** 3.0 (best historical local validation result)
+**Historical Checkpoint:** `model_v3.pkl` (106.3 MB uncompressed); current packaged path is `model/weights/cv/model_v3.pkl.gz`.
 **Evaluation Standard:** SIH 2026 Section 7.3 One-Page Model Report
 
 ---
@@ -11,11 +13,11 @@
 | Field | Specification / Value |
 | :--- | :--- |
 | **Task** | Multiclass crop-disease image classification across **38 classes** (14 crop types). |
-| **Dataset & Split** | **PlantVillage Dataset** (Color, leaf specimen imagery, CC0 License).<br>• Total Images: **54,305**<br>• Train Set: **43,444 images** (80.0%)<br>• Validation Set: **10,861 images** (20.0%) |
+| **Dataset & Split** | Reported PlantVillage color dataset; exact source version and license confirmation are pending.<br>• Total Images: **54,305**<br>• Train Set: **43,444 images** (80.0%)<br>• Validation Set: **10,861 images** (20.0%)<br>• Validation was used for checkpoint selection and is not an independent test. |
 | **Model / Approach** | • **Architecture:** ConvNeXt-Tiny (`convnext_tiny.fb_in22k_ft_in1k_384`)<br>• **Input Resolution:** $\mathbf{384 \times 384 \text{ px}}$ (Natively pretrained at 384px)<br>• **Layer Design:** $7 \times 7$ depthwise convolutions, inverted bottleneck, LayerNorm<br>• **Loss Function:** Label-Smoothed Cross-Entropy ($\alpha = 0.1$)<br>• **Optimizer:** AdamW ($\text{lr} = 10^{-4}$, weight decay $= 0.01$)<br>• **Scheduler:** CosineAnnealingLR ($T_{\max}=10, \eta_{\min}=10^{-6}$)<br>• **Precision:** Automatic Mixed Precision (FP16 AMP)<br>• **Batch Size & Epochs:** Batch Size = 64, Trained for 10 Epochs (Best: Epoch 10) |
 | **Metric & Result** | • **Macro-F1 (Primary Metric): 0.9969**<br>• **Top-1 Validation Accuracy: 99.85% (10,845 / 10,861)**<br>• **Macro Precision:** 0.9970 \| **Macro Recall:** 0.9968<br>• **33 / 38 classes achieve F1 > 0.9900**<br>• **Average GPU Latency:** 24.51 ms / image |
 | **Baseline Comparison** | **+0.57% Macro-F1 improvement over v1 baseline (0.9969 vs 0.9912)** and **+0.23% over v2**. Reduces validation error rate by **74%** compared to baseline. Lifted the hardest class (Corn Cercospora) from F1 0.9020 to **0.9608**. |
-| **Limitations & Failure Cases** | • **In-the-Wild Domain Shift:** When tested on unsegmented field imagery (PlantDoc dataset), top-1 accuracy is **32.4%** and top-3 accuracy is **58.8%** (>2× higher than ResNet-18 baseline).<br>• **Safety Mitigation:** The built-in **0.75 confidence threshold** successfully flags 44.1% of uncertain in-field predictions as *"Low Confidence / Don't Know"*, shielding users from erroneous diagnoses. |
+| **Limitations & Failure Cases** | • **In-the-Wild Domain Shift:** A small 34-image PlantDoc convenience sample produced **32.4%** top-1 and **58.8%** top-3 accuracy. The historical script could draw from both PlantDoc test and train directories, so this is not a clean held-out benchmark.<br>• **Confidence flag:** A 0.75 score threshold flagged 44.1% of sample predictions. The scores were not calibrated, and the threshold does not guarantee that wrong predictions are withheld. |
 
 ---
 

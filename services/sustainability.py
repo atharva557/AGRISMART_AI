@@ -191,6 +191,6 @@ def calculate_score(payload):
             "warnings": warnings,
         },
         reasons=[{"code": "FORMULA_APPLIED", "message": "The published version-1 formula was applied to like-for-like records."}],
-        sources=[{"title": "Project sustainability formula", "reference": "notebooks/11_sustainability_scoring.ipynb"}],
+        sources=[{"title": "Project sustainability formula", "reference": "notebooks/advisory_models/05_sustainability_score.ipynb"}],
         limitations=warnings,
     )

@@ -1,6 +1,7 @@
 import os
 import time
 import pickle
+import gzip
 from PIL import Image
 import streamlit as st
 import torch
@@ -67,18 +68,18 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 CONFIDENCE_THRESHOLD = 0.75
 
 AVAILABLE_MODELS = {
-    "v3: ConvNeXt-Tiny (384px, State-of-the-Art)": {
-        "file": "model_v3.pkl",
+    "v3: ConvNeXt-Tiny (384px, historical validation leader)": {
+        "file": "model_v3.pkl.gz",
         "benchmark_f1": "0.9969",
         "benchmark_acc": "99.85%"
     },
     "v2: ResNet-50 (224px, Label Smoothing)": {
-        "file": "model_v2.pkl",
+        "file": "model_v2.pkl.gz",
         "benchmark_f1": "0.9946",
         "benchmark_acc": "99.67%"
     },
     "v1: ResNet-18 (224px, Baseline)": {
-        "file": "model_v1.pkl",
+        "file": "model_v1.pkl.gz",
         "benchmark_f1": "0.9912",
         "benchmark_acc": "99.43%"
     }
@@ -89,7 +90,8 @@ AVAILABLE_MODELS = {
 def load_bundle(pkl_path: str):
     if not os.path.exists(pkl_path):
         return None, None
-    with open(pkl_path, "rb") as f:
+    opener = gzip.open if pkl_path.endswith(".gz") else open
+    with opener(pkl_path, "rb") as f:
         bundle = pickle.load(f)
 
     arch = bundle["architecture"].lower()
@@ -220,7 +222,7 @@ with col2:
             else:
                 st.markdown(f"""
                 <div class="metric-card">
-                    <div class="metric-header">Confirmed Diagnosis</div>
+                    <div class="metric-header">Model Prediction</div>
                     <div class="metric-value">{clean_prediction_name}</div>
                     <div class="metric-subtext">Confidence Score: <b>{top_prob * 100:.2f}%</b> &nbsp;|&nbsp; Latency: <b>{latency_ms:.2f} ms</b> &nbsp;|&nbsp; Input Res: <b>{bundle['img_size']}x{bundle['img_size']}px</b></div>
                 </div>

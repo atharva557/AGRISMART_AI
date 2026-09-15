@@ -1,7 +1,9 @@
 ﻿# Model Report: Model v1 — Baseline ResNet-18
 
+> **Historical experiment record.** Use [`model_report.md`](model_report.md) for submission. These values come from saved notebook outputs and were not reproduced for the currently packaged compressed checkpoint.
+
 **Version:** 1.0 (Baseline Architecture)  
-**File Checkpoint:** `notebooks/cv_model_notebooks/model_v1.pkl` (42.8 MB)  
+**Historical Checkpoint:** `model_v1.pkl` (42.8 MB uncompressed); current packaged path is `model/weights/cv/model_v1.pkl.gz`.
 **Evaluation Standard:** SIH 2026 Section 7.3 One-Page Model Report
 
 ---
@@ -11,11 +13,11 @@
 | Field | Specification / Value |
 | :--- | :--- |
 | **Task** | Multiclass crop-disease image classification across **38 classes** (14 crop types). |
-| **Dataset & Split** | **PlantVillage Dataset** (Color, leaf specimen imagery, CC0 License).<br>• Total Images: **54,305**<br>• Train Set: **43,444 images** (80.0%)<br>• Validation Set: **10,861 images** (20.0%) |
+| **Dataset & Split** | Reported PlantVillage color dataset; exact source version and license confirmation are pending.<br>• Total Images: **54,305**<br>• Train Set: **43,444 images** (80.0%)<br>• Validation Set: **10,861 images** (20.0%)<br>• Validation was used for checkpoint selection and is not an independent test. |
 | **Model / Approach** | • **Architecture:** ResNet-18 (ImageNet pretrained backbone)<br>• **Input Resolution:** $224 \times 224 \text{ px}$<br>• **Loss Function:** Standard Cross-Entropy Loss<br>• **Optimizer:** Adam ($\text{lr} = 10^{-4}$, $\beta_1=0.9, \beta_2=0.999$)<br>• **Batch Size & Epochs:** Batch Size = 32, Trained for 10 Epochs (Best: Epoch 7) |
 | **Metric & Result** | • **Macro-F1 (Primary Metric): 0.9912**<br>• **Top-1 Validation Accuracy: 99.43% (10,799 / 10,861)**<br>• **Macro Precision:** 0.9910 \| **Macro Recall:** 0.9920<br>• **Average GPU Latency:** 7.57 ms / image |
 | **Baseline Comparison** | Serves as the experimental **starting baseline**. High accuracy on clean lab photos, but weaker separation on visually similar foliar spot lesions. |
-| **Limitations & Failure Cases** | • **Weakest Classes:** Corn Cercospora Leaf Spot (F1: 0.9020), Corn Northern Leaf Blight (F1: 0.9540).<br>• **Overconfidence:** Unsmoothed softmax outputs saturated near 99-100% even on ambiguous inputs.<br>• **Domain Shift (PlantDoc Test):** Drops to **14.7% Top-1** on unsegmented outdoor in-field photos due to 224px feature compression and lack of background invariance. |
+| **Limitations & Failure Cases** | • **Weakest Classes:** Corn Cercospora Leaf Spot (F1: 0.9020), Corn Northern Leaf Blight (F1: 0.9540).<br>• **Overconfidence:** Unsmoothed softmax outputs saturated near 99-100% on some ambiguous inputs; formal calibration was not measured.<br>• **Domain Shift:** A 34-image PlantDoc convenience sample produced **14.7%** top-1. The sample is too small and its historical script could use both train and test directories, so it is not a clean held-out benchmark. |
 
 ---
 

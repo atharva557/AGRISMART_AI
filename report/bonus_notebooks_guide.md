@@ -6,11 +6,11 @@ These notebooks were prepared for manual execution and have since been run by th
 
 | Module | Notebook | Method | Inputs | Local outputs after running |
 | --- | --- | --- | --- | --- |
-| A | `09_crop_recommendation_training.ipynb` | Majority, logistic regression, Gaussian naive Bayes, random forest; validation selection and held-out test | Version-1 Kaggle crop dataset | Model, class mapping, source hash, split IDs, metrics, confusion matrix |
-| B baseline | `07_irrigation_baseline.ipynb` | Rule-based simulation; no training | Assumed crop-stage, moisture, and weather inputs | Decision explanations, comparison chart, sanity checks |
-| B ML experiment | `08_irrigation_model_training.ipynb` | Majority/moisture-split baselines, logistic regression, random forest | Pinned Mendeley moisture and valve series | Controller-behavior model, chronological evaluation, reports |
-| C | `10_weather_advisory.ipynb` | Forecast client plus explicit rules; no training | Coordinates; Open-Meteo hourly forecast or explicit simulated demo | Source-stamped advisory JSON, hourly data, plot |
-| D | `11_sustainability_scoring.ipynb` | Published formula and yield check; no training | Comparable whole-cycle baseline/current resource totals, area, yield, evidence notes | Component scores, scenario comparisons, formula report, sensitivity plot |
+| A | [`01_crop_recommendation.ipynb`](../notebooks/advisory_models/01_crop_recommendation.ipynb) | Majority, logistic regression, Gaussian naive Bayes, random forest; validation selection and held-out test | Version-1 Kaggle crop dataset | Model, class mapping, source hash, split IDs, metrics, confusion matrix |
+| B ML experiment | [`02_irrigation_training.ipynb`](../notebooks/advisory_models/02_irrigation_training.ipynb) | Majority/moisture-split baselines, logistic regression, random forest | Pinned Mendeley moisture and valve series | Controller-behavior model, chronological evaluation, reports |
+| B simulation | [`03_irrigation_simulation.ipynb`](../notebooks/advisory_models/03_irrigation_simulation.ipynb) | Rule-based simulation; no training | Assumed crop-stage, moisture, and weather inputs | Decision explanations, comparison chart, sanity checks |
+| C | [`04_weather_advisory.ipynb`](../notebooks/advisory_models/04_weather_advisory.ipynb) | Forecast client plus explicit rules; no training | Coordinates; Open-Meteo hourly forecast or explicit simulated demo | Source-stamped advisory JSON, hourly data, plot |
+| D | [`05_sustainability_score.ipynb`](../notebooks/advisory_models/05_sustainability_score.ipynb) | Published formula and yield check; no training | Comparable whole-cycle baseline/current resource totals, area, yield, evidence notes | Component scores, scenario comparisons, formula report, sensitivity plot |
 
 ## Quick demo without running notebooks
 
@@ -38,7 +38,7 @@ The source is useful for a prototype but does not supply soil-lab unit conversio
 
 ## Irrigation experiments versus the API
 
-Notebook 07 demonstrates assumed rule-based scenarios. Notebook 08 uses [Mendeley version 3](https://data.mendeley.com/datasets/cjb4vy4mzj/3) for controller-behavior ML experiments; source-file instructions are in the [dataset selection](irrigation_data_selection.md) and [manifest](irrigation_dataset_manifest.json).
+Notebook 03 demonstrates assumed rule-based scenarios. Notebook 02 uses [Mendeley version 3](https://data.mendeley.com/datasets/cjb4vy4mzj/3) for controller-behavior ML experiments; source-file instructions are in the [dataset selection](irrigation_data_selection.md) and [manifest](irrigation_dataset_manifest.json).
 
 The Flask B endpoint accepts calibrated-VWC-shaped inputs and supplied soil/crop/weather parameters, then calculates depletion, action, depth, and volume. It checks numeric ranges, units, evidence kinds, and the presence of a calibration reference, but does not verify that reference or the age/depth applicability of readings. There is no pump control or API serving mode for the saved B classifier. Field use requires additional validation described in the API guide.
 
@@ -68,4 +68,4 @@ Reusable logic is already connected through `services/` -> `app/routes/advisory.
 
 Serving uses the pinned `requirements.txt`; manual notebook work uses `requirements-notebooks.txt`. Only the user runs notebook cells or training. Changing or retraining A's artifact also requires reviewing its checksum, source metadata, serving compatibility, and evaluation evidence rather than replacing the packaged binary silently.
 
-Remaining work includes stricter schemas, evidence/reference verification, B reading-age/root-zone checks and forecast alignment, D completed-cycle/baseline verification, and independent field evaluation. Notebook 09 does not accept C's rainfall period automatically. D needs actual resource totals and a defensible baseline, not B's suggested volume. These gaps must remain visible in reports and demos.
+Remaining work includes stricter schemas, evidence/reference verification, B reading-age/root-zone checks and forecast alignment, D completed-cycle/baseline verification, and independent field evaluation. Notebook 01 does not accept C's rainfall period automatically. D needs actual resource totals and a defensible baseline, not B's suggested volume. These gaps must remain visible in reports and demos.

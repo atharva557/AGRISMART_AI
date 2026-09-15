@@ -6,6 +6,18 @@
 
 **Still pending:** exact organizer labels/split and baseline, official field results, team-confirmed originality declaration, and the recorded demo URL. The model currently has 38 PlantVillage classes; compatibility with the final kickoff subset is unverified.
 
+### Hackathon model result card
+
+| Result | Value | How judges should interpret it |
+| --- | ---: | --- |
+| Historical local validation macro-F1 | **0.9969** | Best saved ConvNeXt-Tiny result on the 10,861-image validation directory used during model selection. It is not an independent or organizer-held-out score. |
+| Historical local validation accuracy | **99.85%** | 10,845/10,861 saved validation predictions were correct. Current compressed weights and preprocessing still require a fresh full evaluation. |
+| PlantDoc field stress-test top-1 | **32.4% (11/34)** | Small convenience sample showing substantial lab-to-field domain shift; not an official benchmark. |
+| PlantDoc field stress-test top-3 | **58.8% (20/34)** | Supporting diagnostic evidence only; the historical sampler could include PlantDoc train and test directories. |
+| Organizer-held-out score | **Pending** | Run the supplied submission check and manifest-based evaluator after the organizers provide the exact class list and test data. |
+
+The authoritative submission summary is the **[concise model report](report/model_report.md)**. Use the [report index](report/README.md) to distinguish submission evidence from historical experiment records, and the [notebook index](notebooks/README.md) for saved-output status and reproducibility limitations.
+
 - [Concise model report](report/model_report.md) and [historical detailed evidence](report/historical_validation_report.md).
 - [Submission checklist](docs/SUBMISSION_CHECKLIST.md), [originality draft and references](docs/ORIGINALITY.md), [four-minute demo script](docs/JUDGE_DEMO.md).
 - **Demo URL:** pending recording. **Deployed app:** not supplied; run locally using the setup below.
@@ -54,7 +66,7 @@ See [evaluation protocol](docs/FIELD_EVALUATION.md) for the manifest contract, p
  ┌─────────────────────────────────────────────────────────────────────────────────────────┐
  │                                                                                         │
  │   Module 1: Plant Pathology Engine         Module 2: Crop Recommendation                │
- │   • ConvNeXt-Tiny (384px) SOTA Model       • 7-Feature Soil & Nutrient Matching         │
+ │   • ConvNeXt-Tiny (384px) Local Leader     • 7-Feature Soil & Nutrient Matching         │
  │   • 38 Pathology Classes (14 Crops)        • Top-3 Ranked Crop Suitability Candidates   │
  │   • 99.85% Validation Accuracy             • Multi-Classifier Machine Learning Model    │
  │                                                                                         │
@@ -72,7 +84,7 @@ See [evaluation protocol](docs/FIELD_EVALUATION.md) for the manifest contract, p
 ```
 
 ### Module 1: Computer Vision Plant Pathology Diagnostic Engine
-- **Primary Architecture:** High-precision **ConvNeXt-Tiny (384px)** deep learning model achieving **99.85% validation accuracy** and **0.9969 Macro-F1** across 38 crop pathology categories (14 distinct crops and healthy foliage).
+- **Primary Architecture:** **ConvNeXt-Tiny (384px)** with a saved historical result of **99.85% validation accuracy** and **0.9969 Macro-F1** across 38 crop pathology categories. These are local validation results, not an organizer-held-out score.
 - **Automated Fallback:** ResNet-18 (224px) baseline model ready for resource-constrained deployments.
 - **Uncertainty policy:** A 75% model-score threshold withholds disease-specific guidance for uncertain predictions. This threshold is not a safety guarantee; incorrect high-score predictions remain possible.
 - **Agronomic Knowledge Base:** Provides reference descriptions, symptoms and precautions from `DISEASE_KB`; these are not symptoms or severity measured from the uploaded image. Independent source validation remains pending.
@@ -248,28 +260,29 @@ A structured overview of all research notebooks, evaluation scripts, and enginee
 
 - **[`01_train_resnet18.ipynb`](./notebooks/plant_pathology/01_train_resnet18.ipynb)**: ResNet-18 baseline model training pipeline on the 38-class dataset. Establishes baseline accuracy (99.43%) with lightweight computational footprint for edge deployment.
 - **[`02_train_resnet50.ipynb`](./notebooks/plant_pathology/02_train_resnet50.ipynb)**: Deeper ResNet-50 architecture exploration achieving 99.67% validation accuracy with detailed cross-entropy loss tracking and learning rate scheduling.
-- **[`03_train_convnext_tiny.ipynb`](./notebooks/plant_pathology/03_train_convnext_tiny.ipynb)**: Champion **ConvNeXt-Tiny (384px)** training pipeline. Includes advanced data augmentations, cosine annealing learning rate schedules, and achieving 99.85% top-1 accuracy (0.9969 Macro-F1).
+- **[`03_train_convnext_tiny.ipynb`](./notebooks/plant_pathology/03_train_convnext_tiny.ipynb)**: Best historical local-validation **ConvNeXt-Tiny (384px)** experiment. Includes augmentation and cosine annealing, with saved validation results of 99.85% accuracy and 0.9969 Macro-F1.
 - **[`sys_gpu_check.ipynb`](./notebooks/plant_pathology/sys_gpu_check.ipynb)**: Hardware diagnostics and CUDA acceleration verification notebook for training and inference environments.
 
 ### Advisory Engines & Simulation Notebooks (`notebooks/advisory_models/`)
 
 - **[`01_crop_recommendation.ipynb`](./notebooks/advisory_models/01_crop_recommendation.ipynb)**: Multi-feature exploratory data analysis, feature importance extraction, and multi-class classification model training for soil nutrient matching.
-- **[`02_irrigation_training.ipynb`](./notebooks/advisory_models/02_irrigation_training.ipynb)**: Soil moisture dynamics modeling, evapotranspiration calculation formulas, and water requirement estimation algorithms.
+- **[`02_irrigation_training.ipynb`](./notebooks/advisory_models/02_irrigation_training.ipynb)**: Chronological experiment that predicts one controller's observed valve behavior from moisture history; it does not learn optimal irrigation volume.
 - **[`03_irrigation_simulation.ipynb`](./notebooks/advisory_models/03_irrigation_simulation.ipynb)**: Daily root-zone soil water balance simulation across distinct soil textures (Sandy, Loam, Clay) and crop growth stages.
 - **[`04_weather_advisory.ipynb`](./notebooks/advisory_models/04_weather_advisory.ipynb)**: Weather risk rule validation, threshold tuning for frost/heat/storm alerts, and Open-Meteo API response schema testing.
-- **[`05_sustainability_score.ipynb`](./notebooks/advisory_models/05_sustainability_score.ipynb)**: Resource consumption benchmarking formulas, efficiency index modeling (0–100 score), and penalty curves for excess nitrogen/water use.
+- **[`05_sustainability_score.ipynb`](./notebooks/advisory_models/05_sustainability_score.ipynb)**: Project resource-comparison formula, yield-retention check, simulated scenarios, and sensitivity analysis.
 
 ### Evaluation & Benchmarking Tools (`notebooks/evaluation_benchmarks/`)
 
-- **[`streamlit_console.py`](./notebooks/evaluation_benchmarks/streamlit_console.py)**: Interactive evaluation console for real-time model testing, top-5 probability inspection, and fallback mechanism verification.
-- **[`benchmark_plantdoc.py`](./notebooks/evaluation_benchmarks/benchmark_plantdoc.py)**: Out-of-domain robustness benchmark evaluating trained classifiers against complex in-field imagery from the PlantDoc dataset.
-- **[`benchmark_web_images.py`](./notebooks/evaluation_benchmarks/benchmark_web_images.py)**: Real-world image evaluation script testing resilience against background clutter, varied lighting, and diverse camera resolutions.
-- **`model_summaries/` & `test_images/`**: Architectural layer summaries, FLOP calculations, and curated multi-class test image suites.
+- **[`streamlit_console.py`](./notebooks/evaluation_benchmarks/streamlit_console.py)**: Historical interactive console for single-image predictions and confidence flagging across the three packaged checkpoints.
+- **[`benchmark_plantdoc.py`](./notebooks/evaluation_benchmarks/benchmark_plantdoc.py)**: Deterministic PlantDoc test-directory convenience sampler for future field stress tests. Historical saved results used 34 images and could include PlantDoc train-directory files.
+- **[`benchmark_web_images.py`](./notebooks/evaluation_benchmarks/benchmark_web_images.py)**: PlantVillage GitHub source-domain smoke test. It is not a field or unrelated-web-image benchmark.
+- **`model_summaries/` & `test_images/`**: Saved model metrics and historical convenience-sample images.
 
 ### Model Performance & Data Audit Reports (`report/`)
 
-- **[`report/model_report.md`](./report/model_report.md)**: Comprehensive architectural benchmark comparing ConvNeXt-Tiny, ResNet-50, and ResNet-18 across accuracy, Macro-F1, loss curves, and latency metrics.
-- **[`report/model_report_v3.md`](./report/model_report_v3.md)**: Dedicated evaluation report for the champion ConvNeXt-Tiny (384px) model (99.85% validation accuracy, 0.9969 Macro-F1).
+- **[`report/README.md`](./report/README.md)**: Judge-facing index separating the current submission report from supporting historical records.
+- **[`report/model_report.md`](./report/model_report.md)**: Authoritative concise submission summary with model approach, historical evidence, inference contract, limitations, and pending official results.
+- **[`report/model_report_v3.md`](./report/model_report_v3.md)**: Historical ConvNeXt-Tiny experiment record (99.85% validation accuracy, 0.9969 Macro-F1); not an organizer-held-out report.
 - **[`report/model_report_v2.md`](./report/model_report_v2.md)**: Detailed training metrics, confusion matrix breakdown, and per-class precision/recall for ResNet-50 (v2).
 - **[`report/model_report_v1.md`](./report/model_report_v1.md)**: Baseline training documentation and performance statistics for ResNet-18 (v1).
 - **[`report/bonus_ab_data_audit.md`](./report/bonus_ab_data_audit.md)**: Agronomic dataset audit, feature correlation analysis, and data cleaning verification for advisory modules.
