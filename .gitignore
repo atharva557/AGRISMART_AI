@@ -42,11 +42,13 @@ notebooks/evaluation_benchmarks/test_images_external_datasets/
 # Generated outputs
 outputs/figures/*
 !outputs/figures/.gitkeep
-!outputs/figures/crop_test_confusion_matrix.png
+!outputs/figures/*.png
 outputs/metrics/*
 !outputs/metrics/.gitkeep
-!outputs/metrics/crop_training_report.json
-!outputs/metrics/crop_validation_comparison.csv
+!outputs/metrics/*.json
+!outputs/metrics/*.csv
+!outputs/metrics/*.md
+!outputs/metrics/*.html
 outputs/predictions/*
 !outputs/predictions/.gitkeep
 
