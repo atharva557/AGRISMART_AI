@@ -11,6 +11,14 @@ AgriSmart AI is a comprehensive, production-grade precision agriculture platform
 
 ---
 
+## 🎬 Demo Video
+
+[![Watch the Demo](https://img.youtube.com/vi/iTQcEL1xBpE/maxresdefault.jpg)](https://youtu.be/iTQcEL1xBpE)
+
+▶️ **[Watch the full demo on YouTube](https://youtu.be/iTQcEL1xBpE)**
+
+---
+
 ## 📑 Table of Contents
 1. [System Architecture](#system-architecture)
 2. [Computer Vision Benchmark & Confusion Matrices](#computer-vision-benchmark--confusion-matrices)
