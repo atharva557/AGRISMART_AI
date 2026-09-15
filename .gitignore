@@ -61,7 +61,6 @@ Thumbs.db
 
 # Build system and generated assets
 node_modules/
-package-lock.json
 app/static/css/dist/
 app/static/js/dist/
 *.min.css

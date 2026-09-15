@@ -133,7 +133,7 @@ python -m venv .venv
 python -m pip install -r requirements.txt
 
 # 4. Install Node.js packages & build frontend production assets
-npm install
+npm ci
 npm run build:all
 
 # 5. Configure environment variables (Optional: Add Gemini API key for Assistant)
@@ -143,7 +143,7 @@ copy .env.example .env
 python run.py
 ```
 
-Access the application in your browser at: **`http://127.0.0.1:5000`**
+Access the application in your browser at: **`http://127.0.0.1:5000`**. The committed npm lockfile pins frontend dependencies; Python requirements remain bounded rather than fully locked.
 
 ---
 
